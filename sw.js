@@ -1,7 +1,7 @@
 const CACHE_NAME = 'green-tumb-v1';
 const urlsToCache = [
   './',
-  './gradina (1).html',
+  './index.html',
   './manifest.json'
 ];
 
