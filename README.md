@@ -1,4 +1,4 @@
-# Green Tumb 🌱
+# Green Thumb 🌱
 
 A beautiful garden planning and tracking web application for managing your vegetable garden. Built as a Progressive Web App (PWA) that can be installed on Android devices.
 
