@@ -1,6 +1,6 @@
 {
-  "name": "Green Tumb",
-  "short_name": "Green Tumb",
+  "name": "Green Thumb",
+  "short_name": "Green Thumb",
   "description": "Garden planning and tracking app",
   "start_url": "./index.html",
   "display": "standalone",
