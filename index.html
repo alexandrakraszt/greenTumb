@@ -104,7 +104,7 @@
   .tab-btn {
     flex: 1;
     min-width: 80px;
-    padding: 14px 12px;
+    padding: 12px 8px;
     border: none;
     background: transparent;
     color: var(--green-pale);
@@ -117,7 +117,6 @@
     white-space: nowrap;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    min-height: 48px;
   }
   .tab-btn.active {
     color: var(--accent-yellow);
@@ -143,21 +142,16 @@
   .map-scroll-hint {
     display: none;
     text-align: center;
-    font-size: 12px;
-    color: var(--accent-yellow);
-    margin-bottom: 10px;
-    font-weight: 700;
+    font-size: 11px;
+    color: var(--green-pale);
+    margin-bottom: 8px;
+    font-weight: 600;
     letter-spacing: 0.5px;
-    animation: hint-fade 4s ease-in-out 0.5s forwards;
-    opacity: 0.95;
-    padding: 8px 12px;
-    background: rgba(0,0,0,0.2);
-    border-radius: 20px;
-    display: inline-block;
+    animation: hint-fade 3s ease-in-out 0.5s forwards;
+    opacity: 0.9;
   }
-  @media (max-width: 760px) { .map-scroll-hint { display: inline-block; } }
-  @media (min-width: 761px) { .map-scroll-hint { display: none !important; } }
-  @keyframes hint-fade { 0%,50%{opacity:0.95} 100%{opacity:0} }
+  @media (max-width: 760px) { .map-scroll-hint { display: block; } }
+  @keyframes hint-fade { 0%,60%{opacity:0.9} 100%{opacity:0} }
 
   .garden-outer {
     background: linear-gradient(145deg, #6B8F4E, #4A7030);
@@ -193,19 +187,18 @@
   /* PLANT BED */
   .bed {
     border-radius: 10px;
-    padding: 12px 10px;
+    padding: 10px 8px;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
     position: relative;
     text-align: center;
     border: 2px solid transparent;
-    min-height: 80px;
-    min-width: 60px;
+    min-height: 70px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 3px;
     user-select: none;
   }
   .bed:active { transform: scale(0.96); }
@@ -325,40 +318,17 @@
     to { transform: translateY(0); opacity: 1; }
   }
   .modal-handle {
-    width: 60px; height: 6px;
-    background: #ccc;
-    border-radius: 4px;
-    margin: -8px auto 20px;
-    cursor: grab;
-    touch-action: none;
+    width: 48px; height: 5px;
+    background: #ddd;
+    border-radius: 3px;
+    margin: -10px auto 18px;
   }
-  .modal-handle:active { background: #bbb; }
   .modal-header {
     display: flex;
     align-items: center;
     gap: 12px;
     margin-bottom: 20px;
-    position: relative;
   }
-  .modal-close-btn {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
-    border: none;
-    background: rgba(0,0,0,0.05);
-    border-radius: 50%;
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #666;
-    transition: background 0.2s;
-  }
-  .modal-close-btn:active { background: rgba(0,0,0,0.1); }
   .modal-emoji { font-size: 36px; }
   .modal-title {
     font-family: 'Playfair Display', serif;
@@ -386,16 +356,14 @@
   .status-btn {
     border: 2px solid #e0e0e0;
     border-radius: 10px;
-    padding: 12px 6px;
+    padding: 8px 4px;
     text-align: center;
     cursor: pointer;
     background: #f8f8f8;
     transition: all 0.15s;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: #666;
-    min-height: 44px;
-    min-width: 44px;
   }
   .status-btn .s-icon { font-size: 18px; display: block; margin-bottom: 3px; }
   .status-btn.selected { border-color: var(--green-mid); background: var(--green-pale); color: var(--green-deep); }
@@ -437,36 +405,34 @@
   /* Buttons */
   .btn-primary {
     width: 100%;
-    padding: 16px;
+    padding: 14px;
     background: linear-gradient(135deg, var(--green-mid), var(--green-light));
     color: white;
     border: none;
     border-radius: 12px;
     font-family: 'Nunito', sans-serif;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 800;
     cursor: pointer;
     margin-top: 20px;
     letter-spacing: 0.5px;
     box-shadow: 0 4px 16px rgba(74,124,35,0.4);
     transition: transform 0.1s, box-shadow 0.1s;
-    min-height: 52px;
   }
   .btn-primary:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(74,124,35,0.3); }
 
   .btn-secondary {
     width: 100%;
-    padding: 14px;
+    padding: 12px;
     background: transparent;
     color: #999;
     border: 2px solid #e8e8e8;
     border-radius: 12px;
     font-family: 'Nunito', sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
     margin-top: 8px;
-    min-height: 48px;
   }
 
   /* ===== CALENDAR PANEL ===== */
@@ -638,9 +604,7 @@
     <div class="legend-item"><div class="legend-dot" style="background:var(--accent-red)"></div>Uscat</div>
   </div>
 
-  <div style="text-align:center; margin-bottom:10px;">
-    <p class="map-scroll-hint">← Glisează pentru a vedea harta →</p>
-  </div>
+  <p class="map-scroll-hint">← Glisează pentru a vedea harta →</p>
   <div class="garden-scroll-wrapper">
   <div class="garden-outer">
     <div class="garden-label">🌿 Plan Grădina</div>
@@ -772,7 +736,6 @@
         <div class="modal-title" id="modal-title">Plantă</div>
         <div class="modal-subtitle" id="modal-subtitle"></div>
       </div>
-      <button class="modal-close-btn" onclick="closeModal()">✕</button>
     </div>
 
     <div class="field-label">Status</div>
@@ -897,41 +860,6 @@ function closeModal() {
 function handleOverlayClick(e) {
   if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
-
-// Swipe-to-dismiss functionality
-let touchStartY = 0;
-let currentTranslateY = 0;
-const modal = document.getElementById('modal');
-const modalOverlay = document.getElementById('modal-overlay');
-
-modal.addEventListener('touchstart', (e) => {
-  touchStartY = e.touches[0].clientY;
-  currentTranslateY = 0;
-}, { passive: true });
-
-modal.addEventListener('touchmove', (e) => {
-  const touchY = e.touches[0].clientY;
-  const deltaY = touchY - touchStartY;
-  
-  // Only allow downward swipe
-  if (deltaY > 0) {
-    currentTranslateY = deltaY;
-    modal.style.transform = `translateY(${currentTranslateY}px)`;
-    modal.style.opacity = 1 - (currentTranslateY / 300);
-  }
-}, { passive: true });
-
-modal.addEventListener('touchend', () => {
-  // If swiped down more than 150px, close modal
-  if (currentTranslateY > 150) {
-    closeModal();
-  } else {
-    // Snap back
-    modal.style.transform = 'translateY(0)';
-    modal.style.opacity = '1';
-  }
-  currentTranslateY = 0;
-}, { passive: true });
 
 function selectStatus(s) {
   document.querySelectorAll('.status-btn').forEach(b => {
