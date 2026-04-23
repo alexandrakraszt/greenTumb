@@ -142,6 +142,17 @@
     background: rgba(255,255,255,0.05);
   }
 
+  /* Responsive: Hide text labels on small screens, show only emoji */
+  @media (max-width: 600px) {
+    .tab-btn {
+      font-size: 18px;
+      padding: 8px 12px;
+    }
+    .tab-btn span {
+      display: none;
+    }
+  }
+
   /* PANELS */
   .panel { display: none; padding: 16px; }
   .panel.active { display: block; }
@@ -298,6 +309,7 @@
     justify-content: center;
     gap: 2px;
     padding: 4px;
+    pointer-events: none;
   }
   .tree-spot span { font-size: 45px; }
   .tree-label { font-size: 8px; color: var(--green-pale); font-weight: 700; text-transform: uppercase; }
@@ -327,6 +339,9 @@
     backdrop-filter: blur(4px);
   }
   .modal-overlay.open { display: flex; }
+  .modal-overlay.centered {
+    align-items: center;
+  }
   .modal {
     background: var(--warm-white);
     border-radius: 24px 24px 0 0;
@@ -338,9 +353,17 @@
     -webkit-overflow-scrolling: touch;
     animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
+  .modal-overlay.centered .modal {
+    border-radius: 24px;
+    animation: fadeIn 0.3s ease;
+  }
   @keyframes slideUp {
     from { transform: translateY(100%); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
   }
   .modal-handle {
     width: 48px; height: 5px;
@@ -600,6 +623,24 @@
   .legend-dot {
     width: 10px; height: 10px; border-radius: 50%;
   }
+
+  .edit-mode-btn {
+    height: 44px;
+    flex: 1;
+    padding: 10px 24px;
+    font-size: 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .edit-mode-btn.hidden {
+    display: none;
+  }
 </style>
 </head>
 <body>
@@ -610,31 +651,30 @@
     <div class="header-weather" id="current-weather"></div>
     <div class="header-date" id="current-date"></div>
     <div style="display:flex;gap:8px;margin-top:4px;">
-      <button onclick="exportData()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;" title="Export date">💾 Export</button>
-      <button onclick="document.getElementById('import-file').click()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;" title="Import date">📂 Import</button>
-      <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)">
+      <button onclick="openDataManager()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;" title="Manage data">💾 Data</button>
     </div>
   </div>
 </div>
 
 <div class="tabs">
-  <button class="tab-btn active" onclick="showTab('plan-gradina')">🗺️ Plan Grădină</button>
-  <button class="tab-btn" onclick="showTab('calendar')">📅 Calendar de plantare</button>
-  <button class="tab-btn" onclick="showTab('progres')">📊 Progresul Grădinii</button>
-  <button class="tab-btn" onclick="toggleEditMode()" id="edit-mode-btn" style="background:#FF9800;">✏️ Editează Grădina</button>
+  <button class="tab-btn active" onclick="showTab('plan-gradina')" data-label="Plan Grădină">🗺️ <span>Plan Grădină</span></button>
+  <button class="tab-btn" onclick="showTab('calendar')" data-label="Calendar de plantare">📅 <span>Calendar de plantare</span></button>
+  <button class="tab-btn" onclick="showTab('progres')" data-label="Progresul Grădinii">📊 <span>Progresul Grădinii</span></button>
+  <button class="tab-btn" onclick="toggleEditMode()" id="edit-mode-btn" style="background:#FF9800;" data-label="Editează Grădina">✏️ <span>Editează Grădina</span></button>
 </div>
 
 <!-- ===== PLAN GRADINA ===== -->
 <div id="tab-plan-gradina" class="panel active">
-  <div id="edit-mode-controls" style="display:none;gap:8px;margin-bottom:12px;">
-    <button onclick="saveEditMode()" class="btn-secondary" style="background:#27AE60;color:#fff;padding:10px 24px;font-size:14px;border:none;border-radius:8px;cursor:pointer;font-weight:700;">Salvează</button>
-    <button onclick="cancelEditMode()" class="btn-secondary" style="background:#E74C3C;color:#fff;padding:10px 24px;font-size:14px;border:none;border-radius:8px;cursor:pointer;font-weight:700;">Anulează</button>
+  <div id="edit-mode-controls" style="display:none;gap:8px;margin-bottom:12px;align-items:center;">
+    <button onclick="addCustomPlant()" id="add-plant-btn" class="edit-mode-btn hidden" style="background:#3498DB;">➕ Plantă</button>
+    <button onclick="saveEditMode()" class="edit-mode-btn" style="background:#27AE60;">Salvează</button>
+    <button onclick="cancelEditMode()" class="edit-mode-btn" style="background:#E74C3C;">Anulează</button>
   </div>
 
   <p class="map-scroll-hint">← Glisează pentru a vedea harta →</p>
   <div class="garden-scroll-wrapper">
   <div class="garden-outer">
-    <div class="garden-label" style="display:flex;align-items:center;justify-content:center;position:relative;">
+      <div class="garden-label" style="display:flex;align-items:center;justify-content:center;">
       <div class="legend">
         <div class="legend-item"><div class="legend-dot" style="background:#ccc"></div>Neplantat</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--green-light)"></div>Plantat</div>
@@ -643,7 +683,6 @@
         <div class="legend-item"><div class="legend-dot" style="background:#E91E63"></div>Planta Perena</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--accent-red)"></div>Uscat</div>
       </div>
-      <button onclick="addCustomPlant()" id="add-plant-btn" style="position:absolute;right:0;background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:700;display:none;" title="Adaugă plantă nouă">➕ Plantă</button>
     </div>
     <div class="garden-inner">
 
@@ -901,6 +940,63 @@
 
     <button class="btn-primary" onclick="saveCustomPlant()">✅ Adaugă Plantă</button>
     <button class="btn-secondary" onclick="closeCustomPlantModal()">Anulează</button>
+  </div>
+</div>
+
+<!-- ===== DATA MANAGEMENT MODAL ===== -->
+<div class="modal-overlay centered" id="data-modal-overlay" onclick="if(event.target===this)closeDataManager()">
+  <div class="modal" id="data-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-emoji">💾</div>
+      <div>
+        <div class="modal-title">Gestionare Date</div>
+        <div class="modal-subtitle">Transferă datele grădinii între dispozitive</div>
+      </div>
+    </div>
+
+    <div style="background:#f0f8e8;border-radius:12px;padding:16px;margin-bottom:20px;border-left:4px solid var(--green-mid);">
+      <div style="font-weight:700;font-size:13px;color:var(--green-deep);margin-bottom:8px;">📱 Cum să transferi datele:</div>
+      <div style="font-size:12px;color:#666;line-height:1.6;">
+        <div style="margin-bottom:8px;"><strong>Opțiunea 1 - Link de partajare:</strong> Click pe "Generează Link", copiază-l și deschide-l pe alt dispozitiv. Datele se importă automat.</div>
+        <div><strong>Opțiunea 2 - Transfer fișier:</strong> Exportă în fișier, trimite-l prin email/mesagerie, apoi importă pe celălalt dispozitiv.</div>
+      </div>
+    </div>
+
+    <div class="field-label">🔗 Link de Partajare (Recomandat)</div>
+    <div style="font-size:11px;color:#888;margin-bottom:8px;">Generează un link ce conține datele grădinii tale</div>
+    <button class="btn-primary" onclick="generateShareLink()">Generează Link</button>
+
+    <div class="field-label" style="margin-top:20px;">📄 Exportă în Fișier</div>
+    <div style="font-size:11px;color:#888;margin-bottom:8px;">Descarcă datele tale ca fișier JSON</div>
+    <button class="btn-secondary" onclick="exportData()">Descarcă Fișier Backup</button>
+
+    <div class="field-label" style="margin-top:20px;">📂 Importă din Fișier</div>
+    <div style="font-size:11px;color:#888;margin-bottom:8px;">Încarcă date dintr-un fișier backup</div>
+    <button class="btn-secondary" onclick="document.getElementById('import-file').click()">Importă Fișier Backup</button>
+    <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)">
+
+    <button class="btn-secondary" onclick="closeDataManager()" style="margin-top:20px;">Închide</button>
+  </div>
+</div>
+
+<!-- ===== SHARE LINK MODAL ===== -->
+<div class="modal-overlay centered" id="share-modal-overlay" onclick="if(event.target===this)closeShareModal()">
+  <div class="modal" id="share-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-emoji">🔗</div>
+      <div>
+        <div class="modal-title">Link de Partajare</div>
+        <div class="modal-subtitle">Copiază și trimite acest link către alt dispozitiv</div>
+      </div>
+    </div>
+
+    <div class="field-label">Link de Partajare</div>
+    <textarea id="share-link-text" readonly style="min-height:80px;font-size:12px;font-family:monospace;"></textarea>
+
+    <button class="btn-primary" onclick="copyShareLink()">📋 Copiază Link</button>
+    <button class="btn-secondary" onclick="closeShareModal()">Închide</button>
   </div>
 </div>
 
@@ -1390,6 +1486,80 @@ function importData(event) {
   reader.readAsText(file);
 }
 
+function generateShareLink() {
+  const exportData = {
+    gardenData: gardenData,
+    customPlants: JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]'),
+    exportDate: new Date().toISOString()
+  };
+
+  const encodedData = btoa(JSON.stringify(exportData));
+  const baseUrl = window.location.href.split('?')[0];
+  const shareLink = `${baseUrl}?data=${encodedData}`;
+
+  document.getElementById('share-link-text').value = shareLink;
+  document.getElementById('share-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function copyShareLink() {
+  const shareLinkText = document.getElementById('share-link-text');
+  shareLinkText.select();
+  shareLinkText.setSelectionRange(0, 99999); // For mobile devices
+
+  navigator.clipboard.writeText(shareLinkText.value).then(() => {
+    showToast('📋 Link copiat!');
+  }).catch(err => {
+    showToast('❌ Eroare la copiere!');
+    console.error(err);
+  });
+}
+
+function closeShareModal() {
+  document.getElementById('share-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function openDataManager() {
+  document.getElementById('data-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDataManager() {
+  document.getElementById('data-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function importFromUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const dataParam = urlParams.get('data');
+
+  if (dataParam) {
+    try {
+      const imported = JSON.parse(atob(dataParam));
+      if (imported.gardenData) {
+        gardenData = imported.gardenData;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(gardenData));
+
+        if (imported.customPlants) {
+          localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(imported.customPlants));
+          loadCustomPlants();
+        }
+
+        initBeds();
+        showToast('📂 Date importate cu succes!');
+
+        // Clear the URL parameter
+        const cleanUrl = window.location.href.split('?')[0];
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    } catch (err) {
+      showToast('❌ Eroare la import din link!');
+      console.error(err);
+    }
+  }
+}
+
 // ============ CUSTOM PLANTS ============
 let customPlants = JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]');
 
@@ -1515,7 +1685,7 @@ function saveCustomPlant() {
   // Find a non-overlapping position (top-left corner default)
   let left = 10, top = 10, width = 80, height = 75;
   let attempts = 0;
-  while (checkCollision(left, top, width, height) && attempts < 100) {
+  while (checkCollision(left, top, width, height, null, 5) && attempts < 100) {
     left += 90; // Move right
     if (left > 600) {
       left = 10;
@@ -1581,9 +1751,6 @@ function handleResizeStart(e) {
   resizingBed = e.target.closest('.bed');
   if (!resizingBed) return;
   
-  // Temporarily disable click handler
-  resizingBed.style.pointerEvents = 'none';
-  
   resizeStartWidth = resizingBed.offsetWidth;
   resizeStartHeight = resizingBed.offsetHeight;
   resizeStartX = e.clientX;
@@ -1608,7 +1775,7 @@ function handleResizeMove(e) {
   const currentLeft = parseInt(resizingBed.style.left);
   const currentTop = parseInt(resizingBed.style.top);
   
-  if (!checkCollision(currentLeft, currentTop, newWidth, newHeight, resizingBed)) {
+  if (!checkCollision(currentLeft, currentTop, newWidth, newHeight, resizingBed, 5)) {
     resizingBed.style.width = newWidth + 'px';
     resizingBed.style.height = newHeight + 'px';
   }
@@ -1633,20 +1800,13 @@ function handleResizeEnd(e) {
     }
   }
   
-  // Re-enable click handler
-  setTimeout(() => {
-    if (resizingBed) {
-      resizingBed.style.pointerEvents = 'auto';
-    }
-  }, 200);
-  
   document.removeEventListener('mousemove', handleResizeMove);
   document.removeEventListener('mouseup', handleResizeEnd);
   
   resizingBed = null;
 }
 
-function checkCollision(left, top, width, height, excludeBed = null) {
+function checkCollision(left, top, width, height, excludeBed = null, padding = 0) {
   const beds = document.querySelectorAll('.bed');
   for (let bed of beds) {
     if (bed === excludeBed) continue;
@@ -1656,11 +1816,11 @@ function checkCollision(left, top, width, height, excludeBed = null) {
     const bedWidth = bed.offsetWidth;
     const bedHeight = bed.offsetHeight;
     
-    // Check if rectangles overlap
-    if (left < bedLeft + bedWidth &&
-        left + width > bedLeft &&
-        top < bedTop + bedHeight &&
-        top + height > bedTop) {
+    // Check if rectangles overlap (with padding buffer)
+    if (left + padding < bedLeft + bedWidth - padding &&
+        left + width - padding > bedLeft + padding &&
+        top + padding < bedTop + bedHeight - padding &&
+        top + height - padding > bedTop + padding) {
       return true;
     }
   }
@@ -1704,7 +1864,7 @@ function handleDragEnd(e) {
   newTop = Math.max(0, Math.min(newTop, innerHeight - bedHeight));
   
   // Check for collision
-  if (checkCollision(newLeft, newTop, bedWidth, bedHeight)) {
+  if (checkCollision(newLeft, newTop, bedWidth, bedHeight, draggedBed, 5)) {
     showToast('⚠️ Suprapunere nepermisă!');
     draggedBed.style.opacity = '1';
     draggedBed = null;
@@ -2247,7 +2407,7 @@ function toggleEditMode() {
     editBtn.textContent = '✏️ Editare activă';
     editBtn.style.background = '#E67E22';
     editControls.style.display = 'flex';
-    addPlantBtn.style.display = 'block';
+    addPlantBtn.classList.remove('hidden');
     
     // Track plants added during this edit session
     plantsAddedDuringEdit = [];
@@ -2255,11 +2415,9 @@ function toggleEditMode() {
     // Ensure all beds have drag functionality
     const beds = document.querySelectorAll('.bed');
     beds.forEach(bed => {
-      if (!bed.draggable) {
-        bed.draggable = true;
-        bed.addEventListener('dragstart', handleDragStart);
-        bed.addEventListener('dragend', handleDragEnd);
-      }
+      bed.draggable = true;
+      bed.addEventListener('dragstart', handleDragStart);
+      bed.addEventListener('dragend', handleDragEnd);
     });
     
     // First, update gardenData with current DOM state (capture positions)
@@ -2287,8 +2445,16 @@ function toggleEditMode() {
     // Then save current state before editing (now includes current positions)
     gardenDataBeforeEdit = JSON.stringify(gardenData);
     
-    // Show resize handles
-    document.querySelectorAll('.resize-handle').forEach(handle => {
+    // Show resize handles for all beds
+    beds.forEach(bed => {
+      let handle = bed.querySelector('.resize-handle');
+      if (!handle) {
+        handle = document.createElement('div');
+        handle.className = 'resize-handle';
+        handle.style.cssText = 'position:absolute;bottom:0;right:0;width:15px;height:15px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:0 0 10px 0;';
+        handle.onmousedown = handleResizeStart;
+        bed.appendChild(handle);
+      }
       handle.style.display = 'block';
     });
     
@@ -2308,7 +2474,7 @@ function saveEditMode() {
   editBtn.textContent = '✏️ Editează Grădina';
   editBtn.style.background = '#FF9800';
   editControls.style.display = 'none';
-  addPlantBtn.style.display = 'none';
+  addPlantBtn.classList.add('hidden');
   
   // Save to localStorage
   localStorage.setItem(STORAGE_KEY, JSON.stringify(gardenData));
@@ -2332,7 +2498,7 @@ function cancelEditMode() {
   editBtn.textContent = '✏️ Editează Grădina';
   editBtn.style.background = '#FF9800';
   editControls.style.display = 'none';
-  addPlantBtn.style.display = 'none';
+  addPlantBtn.classList.add('hidden');
   
   // Restore previous state if we had one
   if (gardenDataBeforeEdit) {
@@ -2462,6 +2628,7 @@ loadCustomPlants();
 initBeds();
 displayCurrentDate();
 fetchWeather();
+importFromUrl();
 
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
