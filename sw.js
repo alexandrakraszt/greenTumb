@@ -1,7 +1,5 @@
-const CACHE_NAME = 'green-tumb-v1';
+const CACHE_NAME = 'green-tumb-v2';
 const urlsToCache = [
-  './',
-  './index.html',
   './manifest.json'
 ];
 
@@ -13,15 +11,33 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
+  // Network-first for HTML to always get latest version
+  if (event.request.url.includes('.html') || event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Cache the fetched HTML for offline use
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
           return response;
-        }
-        return fetch(event.request);
-      })
-  );
+        })
+        .catch(() => {
+          // Fallback to cache if network fails
+          return caches.match(event.request);
+        })
+    );
+  } else {
+    // Cache-first for other resources
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => {
+          if (response) {
+            return response;
+          }
+          return fetch(event.request);
+        })
+    );
+  }
 });
 
 self.addEventListener('activate', event => {
