@@ -3,9 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <title>Green Thumb</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2D5016">
@@ -13,17 +10,47 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Green Thumb">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
+  // Firebase Configuration - REPLACE WITH YOUR OWN CONFIG
+  // Get your config from: https://console.firebase.google.com/
+  const firebaseConfig = {
+    apiKey: "AIzaSyCSNsdefxLW9YK13EHlsh6CiJwKmxmxinY",
+    authDomain: "greenthumb-59917.firebaseapp.com",
+    projectId: "greenthumb-59917",
+    storageBucket: "greenthumb-59917.firebasestorage.app",
+    messagingSenderId: "921231749667",
+    appId: "1:921231749667:web:4884e4c07dca050d55b796"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Use Anonymous Authentication
+  let currentUser = null;
+  let dbInitialized = false;
+
   // Cache-busting using timestamp - automatically forces reload daily
-  const today = new Date().toDateString();
-  const lastVisit = localStorage.getItem('last_visit_date');
-  if (lastVisit !== today) {
-    localStorage.setItem('last_visit_date', today);
-    // Force reload to get latest version
-    if (performance.getEntriesByType) {
-      const nav = performance.getEntriesByType('navigation')[0];
-      if (nav && nav.type === 'back_forward') {
-        location.reload(true);
+  // Skip reload if data is being imported via URL parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasDataParam = urlParams.has('data');
+  
+  if (!hasDataParam) {
+    const today = new Date().toDateString();
+    const lastVisit = localStorage.getItem('last_visit_date');
+    if (lastVisit !== today) {
+      localStorage.setItem('last_visit_date', today);
+      // Force reload to get latest version
+      if (performance.getEntriesByType) {
+        const nav = performance.getEntriesByType('navigation')[0];
+        if (nav && nav.type === 'back_forward') {
+          location.reload(true);
+        }
       }
     }
   }
@@ -650,6 +677,7 @@
   <div class="header-info">
     <div class="header-weather" id="current-weather"></div>
     <div class="header-date" id="current-date"></div>
+    <div id="sync-status" style="font-size:10px;color:var(--green-pale);margin-top:2px;font-weight:600;">⏳ Inițializare...</div>
     <div style="display:flex;gap:8px;margin-top:4px;">
       <button onclick="openDataManager()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;" title="Manage data">💾 Administrare</button>
     </div>
@@ -994,6 +1022,7 @@
 
     <div class="field-label">Link de Partajare</div>
     <textarea id="share-link-text" readonly style="min-height:80px;font-size:12px;font-family:monospace;"></textarea>
+    <div id="link-length-info" style="font-size:11px;color:#666;margin-top:6px;"></div>
 
     <button class="btn-primary" onclick="copyShareLink()">📋 Copiază Link</button>
   </div>
@@ -1022,21 +1051,104 @@ let editMode = false;
 let gardenDataBeforeEdit = null;
 let plantsAddedDuringEdit = [];
 
-function loadData() {
+// Firebase initialization
+async function initializeFirebase() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch(e) { return {}; }
+    // Sign in anonymously
+    const userCredential = await auth.signInAnonymously();
+    currentUser = userCredential.user;
+    console.log('Anonymous user signed in:', currentUser.uid);
+    dbInitialized = true;
+    updateSyncStatus('✓ Conectat la Firebase');
+    return currentUser;
+  } catch (error) {
+    console.error('Firebase auth error:', error);
+    updateSyncStatus('❌ Eroare Firebase');
+    // Fall back to localStorage
+    return null;
+  }
 }
 
-function saveData(data) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+// Load data from Firestore (with localStorage fallback)
+async function loadData() {
+  // First try localStorage for instant load
+  try {
+    const localRaw = localStorage.getItem(STORAGE_KEY);
+    if (localRaw) {
+      const localData = JSON.parse(localRaw);
+      // Then load from Firestore in background
+      if (currentUser) {
+        loadFromFirestore();
+      }
+      return localData;
+    }
+  } catch(e) {}
+
+  // If no localStorage data, try Firestore
+  if (currentUser) {
+    return await loadFromFirestore();
+  }
+  return {};
 }
 
-let gardenData = loadData();
+// Load from Firestore
+async function loadFromFirestore() {
+  if (!currentUser) return {};
+  try {
+    const doc = await db.collection('gardens').doc(currentUser.uid).get();
+    if (doc.exists) {
+      const data = doc.data();
+      // Save to localStorage as backup
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.gardenData));
+      if (data.customPlants) {
+        localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(data.customPlants));
+      }
+      updateSyncStatus('✓ Date sincronizate');
+      return data.gardenData || {};
+    }
+  } catch (error) {
+    console.error('Error loading from Firestore:', error);
+    updateSyncStatus('⚠️ Eroare sincronizare');
+  }
+  return {};
+}
+
+// Save data to Firestore (and localStorage as backup)
+async function saveData(data) {
+  // Always save to localStorage first for instant feedback
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch(e) {}
+
+  // Then save to Firestore
+  if (currentUser) {
+    try {
+      const customPlants = JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]');
+      await db.collection('gardens').doc(currentUser.uid).set({
+        gardenData: data,
+        customPlants: customPlants,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      updateSyncStatus('✓ Salvat în Firebase');
+    } catch (error) {
+      console.error('Error saving to Firestore:', error);
+      updateSyncStatus('⚠️ Eroare salvare');
+    }
+  }
+}
+
+let gardenData = {};
 
 function getData(id) {
   return gardenData[id] || { status: 'neplantat', date: '', note: '', history: [] };
+}
+
+// Update sync status in UI
+function updateSyncStatus(message) {
+  const statusEl = document.getElementById('sync-status');
+  if (statusEl) {
+    statusEl.textContent = message;
+  }
 }
 
 // ============ TABS ============
@@ -1493,14 +1605,28 @@ function generateShareLink() {
       exportDate: new Date().toISOString()
     };
 
-    // Encode with UTF-8 support for Romanian characters
-    const encodedData = btoa(unescape(encodeURIComponent(JSON.stringify(exportData))));
-    const baseUrl = window.location.href.split('?')[0];
-    const shareLink = `${baseUrl}?data=${encodedData}`;
+    // Compress data using lz-string, then encode with UTF-8 support
+    const jsonString = JSON.stringify(exportData);
+    const compressed = LZString.compressToEncodedURIComponent(jsonString);
+    const shareLink = `${window.location.href.split('?')[0]}?data=${compressed}`;
 
     const shareLinkText = document.getElementById('share-link-text');
+    const lengthInfo = document.getElementById('link-length-info');
+    
     if (shareLinkText) {
       shareLinkText.value = shareLink;
+      
+      // Display character count with warning if too long
+      const length = shareLink.length;
+      const maxLength = 2000; // Safe limit for most browsers
+      if (lengthInfo) {
+        if (length > maxLength) {
+          lengthInfo.innerHTML = `<span style="color:#E74C3C;font-weight:700;">⚠️ Link prea lung: ${length} caractere (limita: ${maxLength}). Folosește opțiunea de export fișier.</span>`;
+        } else {
+          lengthInfo.innerHTML = `<span style="color:#27AE60;">✓ Lungime link: ${length} caractere</span>`;
+        }
+      }
+      
       document.getElementById('share-modal-overlay').classList.add('open');
       document.body.style.overflow = 'hidden';
     } else {
@@ -1545,29 +1671,43 @@ function importFromUrl() {
   const urlParams = new URLSearchParams(window.location.search);
   const dataParam = urlParams.get('data');
 
+  console.log('importFromUrl called, dataParam length:', dataParam ? dataParam.length : 0);
+
   if (dataParam) {
     try {
-      // Decode with UTF-8 support for Romanian characters
-      const imported = JSON.parse(decodeURIComponent(escape(atob(dataParam))));
+      console.log('Attempting to decode data...');
+      // Decompress using lz-string
+      const jsonString = LZString.decompressFromEncodedURIComponent(dataParam);
+      if (!jsonString) {
+        throw new Error('Failed to decompress data');
+      }
+      const imported = JSON.parse(jsonString);
+      console.log('Data decoded successfully, gardenData keys:', Object.keys(imported.gardenData || {}));
+      
       if (imported.gardenData) {
         gardenData = imported.gardenData;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(gardenData));
+        console.log('gardenData saved to localStorage');
 
         if (imported.customPlants) {
           localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(imported.customPlants));
           loadCustomPlants();
+          console.log('customPlants saved and loaded');
         }
 
         initBeds();
         showToast('📂 Date importate cu succes!');
 
-        // Clear the URL parameter
-        const cleanUrl = window.location.href.split('?')[0];
-        window.history.replaceState({}, document.title, cleanUrl);
+        // Clear the URL parameter (delay to ensure data is saved)
+        setTimeout(() => {
+          const cleanUrl = window.location.href.split('?')[0];
+          window.history.replaceState({}, document.title, cleanUrl);
+          console.log('URL parameter cleared');
+        }, 100);
       }
     } catch (err) {
-      showToast('❌ Eroare la import din link!');
-      console.error(err);
+      console.error('Error importing from URL:', err);
+      showToast('❌ Eroare la import din link! ' + err.message);
     }
   }
 }
@@ -2636,24 +2776,39 @@ function getWeatherIcon(code) {
   return '🌤️'; // Default
 }
 
-loadCustomPlants();
-initBeds();
-displayCurrentDate();
-fetchWeather();
-importFromUrl();
+// Initialize Firebase and load data
+async function initializeApp() {
+  // Import from URL FIRST, before loading anything else
+  importFromUrl();
 
-// Register Service Worker for PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(registration => {
-        console.log('ServiceWorker registration successful');
-      })
-      .catch(error => {
-        console.log('ServiceWorker registration failed:', error);
-      });
-  });
+  // Initialize Firebase
+  await initializeFirebase();
+
+  // Load data from Firestore/localStorage
+  gardenData = await loadData();
+
+  // Initialize the rest of the app
+  loadCustomPlants();
+  initBeds();
+  displayCurrentDate();
+  fetchWeather();
 }
+
+// Start the app
+initializeApp();
+
+// Service Worker disabled temporarily to test localStorage persistence
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//     navigator.serviceWorker.register('./sw.js')
+//       .then(registration => {
+//         console.log('ServiceWorker registration successful');
+//       })
+//       .catch(error => {
+//         console.log('ServiceWorker registration failed:', error);
+//       });
+//   });
+// }
 </script>
 </body>
 </html>
