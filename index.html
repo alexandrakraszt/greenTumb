@@ -181,6 +181,7 @@
     border: 2px solid #8B6340;
     box-shadow: inset 0 4px 20px rgba(0,0,0,0.2);
     touch-action: pan-x;
+    margin: 0 auto;
   }
 
 
@@ -200,6 +201,12 @@
     justify-content: center;
     gap: 3px;
     user-select: none;
+    overflow: hidden;
+    min-width: 50px;
+    min-height: 50px;
+  }
+  .bed.resizing {
+    opacity: 0.8;
   }
   .bed:active { transform: scale(0.96); }
   .bed.raised {
@@ -584,30 +591,42 @@
   <div class="header-info">
     <div class="header-weather" id="current-weather"></div>
     <div class="header-date" id="current-date"></div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button onclick="exportData()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;" title="Export date">💾 Export</button>
+      <button onclick="document.getElementById('import-file').click()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;" title="Import date">📂 Import</button>
+      <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)">
+    </div>
   </div>
 </div>
 
 <div class="tabs">
   <button class="tab-btn active" onclick="showTab('plan-gradina')">🗺️ Plan Grădină</button>
-  <button class="tab-btn" onclick="showTab('calendar')">📅 Calendar</button>
-  <button class="tab-btn" onclick="showTab('progres')">📊 Progres</button>
+  <button class="tab-btn" onclick="showTab('calendar')">📅 Calendar de plantare</button>
+  <button class="tab-btn" onclick="showTab('progres')">📊 Progresul Grădinii</button>
+  <button class="tab-btn" onclick="toggleEditMode()" id="edit-mode-btn" style="background:#FF9800;">✏️ Editează Grădina</button>
 </div>
 
 <!-- ===== PLAN GRADINA ===== -->
 <div id="tab-plan-gradina" class="panel active">
-  <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:#ccc"></div>Neplantat</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--green-light)"></div>Plantat</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--accent-yellow)"></div>Încolțit</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--accent-blue)"></div>Recoltat</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#E91E63"></div>Planta Perena</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--accent-red)"></div>Uscat</div>
+  <div id="edit-mode-controls" style="display:none;gap:8px;margin-bottom:12px;">
+    <button onclick="saveEditMode()" class="btn-secondary" style="background:#27AE60;color:#fff;padding:10px 24px;font-size:14px;border:none;border-radius:8px;cursor:pointer;font-weight:700;">Salvează</button>
+    <button onclick="cancelEditMode()" class="btn-secondary" style="background:#E74C3C;color:#fff;padding:10px 24px;font-size:14px;border:none;border-radius:8px;cursor:pointer;font-weight:700;">Anulează</button>
   </div>
 
   <p class="map-scroll-hint">← Glisează pentru a vedea harta →</p>
   <div class="garden-scroll-wrapper">
   <div class="garden-outer">
-    <div class="garden-label">🌿 Plan Grădina</div>
+    <div class="garden-label" style="display:flex;align-items:center;justify-content:center;position:relative;">
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#ccc"></div>Neplantat</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green-light)"></div>Plantat</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent-yellow)"></div>Încolțit</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent-blue)"></div>Recoltat</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#E91E63"></div>Planta Perena</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent-red)"></div>Uscat</div>
+      </div>
+      <button onclick="addCustomPlant()" id="add-plant-btn" style="position:absolute;right:0;background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:700;display:none;" title="Adaugă plantă nouă">➕ Plantă</button>
+    </div>
     <div class="garden-inner">
 
       <!-- ZMEURĂ -->
@@ -708,13 +727,11 @@
 
 <!-- ===== CALENDAR ===== -->
 <div id="tab-calendar" class="panel">
-  <div class="section-title">📅 Calendar de plantare</div>
   <div id="calendar-list"></div>
 </div>
 
 <!-- ===== PROGRES ===== -->
 <div id="tab-progres" class="panel">
-  <div class="section-title">📊 Progresul grădinii</div>
   <div class="stats-row">
     <div class="big-stat"><div class="num" id="stat-planted">0</div><div class="lbl">Plantate</div></div>
     <div class="big-stat"><div class="num" id="stat-total">0</div><div class="lbl">Total plante</div></div>
@@ -731,12 +748,57 @@
   <div class="modal" id="modal">
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <div class="modal-emoji" id="modal-emoji">🌱</div>
-      <div>
-        <div class="modal-title" id="modal-title">Plantă</div>
+      <div class="modal-emoji" id="modal-emoji" onclick="toggleEmojiPicker()" style="cursor:pointer;" title="Click to change emoji">🌱</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="modal-title" id="modal-title">Plantă</div>
+          <span onclick="editModalTitle()" style="cursor:pointer;font-size:18px;color:#666;" title="Click to edit">✏️</span>
+        </div>
         <div class="modal-subtitle" id="modal-subtitle"></div>
       </div>
     </div>
+    
+    <div id="emoji-picker" style="display:none;background:#fff;border:2px solid #e8e8e8;border-radius:12px;padding:12px;margin-bottom:16px;">
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-height:200px;overflow-y:auto;">
+        <span onclick="selectEmoji('🌱')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌱</span>
+        <span onclick="selectEmoji('🌿')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌿</span>
+        <span onclick="selectEmoji('🌳')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌳</span>
+        <span onclick="selectEmoji('🌲')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌲</span>
+        <span onclick="selectEmoji('🍅')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍅</span>
+        <span onclick="selectEmoji('🥬')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥬</span>
+        <span onclick="selectEmoji('🥕')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥕</span>
+        <span onclick="selectEmoji('🧅')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🧅</span>
+        <span onclick="selectEmoji('🧄')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🧄</span>
+        <span onclick="selectEmoji('🥔')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥔</span>
+        <span onclick="selectEmoji('🍓')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍓</span>
+        <span onclick="selectEmoji('🍇')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍇</span>
+        <span onclick="selectEmoji('🫛')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🫛</span>
+        <span onclick="selectEmoji('🌽')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌽</span>
+        <span onclick="selectEmoji('🎃')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🎃</span>
+        <span onclick="selectEmoji('🍆')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍆</span>
+        <span onclick="selectEmoji('🫑')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🫑</span>
+        <span onclick="selectEmoji('🥒')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥒</span>
+        <span onclick="selectEmoji('🌶️')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌶️</span>
+        <span onclick="selectEmoji('🍋')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍋</span>
+        <span onclick="selectEmoji('🍊')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍊</span>
+        <span onclick="selectEmoji('🍎')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍎</span>
+        <span onclick="selectEmoji('🍑')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍑</span>
+        <span onclick="selectEmoji('🍒')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍒</span>
+        <span onclick="selectEmoji('🥝')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥝</span>
+        <span onclick="selectEmoji('🌻')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌻</span>
+        <span onclick="selectEmoji('🌸')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌸</span>
+        <span onclick="selectEmoji('🌷')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌷</span>
+        <span onclick="selectEmoji('🌹')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌹</span>
+        <span onclick="selectEmoji('🪴')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🪴</span>
+        <span onclick="selectEmoji('🧁')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🧁</span>
+        <span onclick="selectEmoji('🍥')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍥</span>
+        <span onclick="selectEmoji('🌾')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌾</span>
+        <span onclick="selectEmoji('🍄')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍄</span>
+        <span onclick="selectEmoji('🌰')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌰</span>
+        <span onclick="selectEmoji('🥜')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥜</span>
+      </div>
+    </div>
+    <input type="text" id="modal-title-input" placeholder="Numele plantei" style="display:none;" onblur="saveModalTitleInline()" onkeydown="if(event.key==='Enter'){event.preventDefault();saveModalTitleInline();}">
 
     <div class="field-label">Status</div>
     <div class="status-grid">
@@ -754,17 +816,75 @@
     <div class="field-label">Observații</div>
     <textarea id="modal-note" placeholder="Scrie orice observație... ex: am pus compost, sol umed, am văzut melci..."></textarea>
 
+    <div class="field-label" style="margin-top:16px;">📅 Data ultimei udări</div>
+    <input type="date" id="modal-watering-date">
+
+    <div class="field-label" style="margin-top:16px;">🧺 Recoltă</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <input type="date" id="modal-harvest-date" placeholder="Data recoltării">
+      <input type="text" id="modal-harvest-quantity" placeholder="Cantitate (ex: 2kg)">
+    </div>
+    <button class="btn-secondary" onclick="addHarvestEntry()" style="margin-top:8px;font-size:14px;padding:8px;">+ Adaugă Recoltă</button>
+    <div id="harvest-list" style="margin-top:8px;font-size:12px;max-height:100px;overflow-y:auto;"></div>
+
+    <div class="field-label" style="margin-top:16px;">🔄 Plantare succesivă</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <input type="date" id="modal-succession-date" placeholder="Data plantării următoare">
+      <input type="number" id="modal-succession-interval" placeholder="Interval (zile)" min="7">
+    </div>
+    <button class="btn-secondary" onclick="addSuccessionEntry()" style="margin-top:8px;font-size:14px;padding:8px;">+ Adaugă Plantare</button>
+    <div id="succession-list" style="margin-top:8px;font-size:12px;max-height:100px;overflow-y:auto;"></div>
+
     <div id="history-section" style="display:none;">
       <div class="field-label" style="margin-top:16px;">Istoric notițe</div>
       <div id="history-list"></div>
     </div>
 
+
     <button class="btn-primary" onclick="saveModal()">✅ Salvează</button>
     <button class="btn-secondary" onclick="closeModal()">Anulează</button>
+    <button class="btn-secondary" onclick="deletePlant()" style="color:#C0392B;border-color:#C0392B;margin-top:4px;">🗑️ Șterge Plantă</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- ===== CUSTOM PLANT MODAL ===== -->
+<div class="modal-overlay" id="custom-plant-modal-overlay" onclick="if(event.target===this)closeCustomPlantModal()">
+  <div class="modal" id="custom-plant-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-emoji">➕</div>
+      <div>
+        <div class="modal-title">Adaugă Plantă Nouă</div>
+        <div class="modal-subtitle">Creează o plantă personalizată</div>
+      </div>
+    </div>
+
+    <div class="field-label">Nume plantă</div>
+    <input type="text" id="custom-plant-name" placeholder="Numele plantei">
+
+    <div class="field-label">Emoji</div>
+    <input type="text" id="custom-plant-emoji" placeholder="🌱" maxlength="2" style="text-align:center;font-size:24px;">
+
+    <div class="field-label">Tip</div>
+    <select id="custom-plant-type" style="width:100%;border:2px solid #e8e8e8;border-radius:10px;padding:10px 12px;font-family:'Nunito',sans-serif;font-size:16px;background:#fafafa;color:#2D2D2D;">
+      <option value="strat înalt">Strat înalt</option>
+      <option value="strat pământ">Strat pământ</option>
+      <option value="micro seră">Micro seră</option>
+      <option value="sol direct">Sol direct</option>
+    </select>
+
+    <div class="field-label">Perioadă de plantare</div>
+    <input type="text" id="custom-plant-period" placeholder="ex: Martie – Mai">
+
+    <div class="field-label">Observații</div>
+    <textarea id="custom-plant-obs" placeholder="Instrucțiuni de îngrijire..." style="min-height:60px;"></textarea>
+
+    <button class="btn-primary" onclick="saveCustomPlant()">✅ Adaugă Plantă</button>
+    <button class="btn-secondary" onclick="closeCustomPlantModal()">Anulează</button>
+  </div>
+</div>
 
 <script>
 // ============ DATA ============
@@ -782,6 +902,12 @@ const PLANTS = {
 };
 
 const STORAGE_KEY = 'gradina_data_v1';
+const CUSTOM_PLANTS_KEY = 'custom_plants_v1';
+
+// Edit mode state
+let editMode = false;
+let gardenDataBeforeEdit = null;
+let plantsAddedDuringEdit = [];
 
 function loadData() {
   try {
@@ -815,15 +941,41 @@ function showTab(id) {
 let currentId = null;
 
 function openModal(id) {
+  // Don't open modal if in edit mode
+  if (editMode) return;
+  
   currentId = id;
   const plant = PLANTS[id];
   const data = getData(id);
   
-  document.getElementById('modal-emoji').textContent = plant.emoji;
-  document.getElementById('modal-title').textContent = plant.name;
+  document.getElementById('modal-emoji').textContent = data.emoji || plant.emoji;
+  document.getElementById('modal-title').textContent = data.name || plant.name;
   document.getElementById('modal-subtitle').textContent = plant.type + ' · ' + plant.period;
   document.getElementById('modal-date').value = data.date || '';
   document.getElementById('modal-note').value = '';
+  document.getElementById('modal-watering-date').value = data.wateringDate || '';
+  
+  // Reset harvest inputs
+  document.getElementById('modal-harvest-date').value = '';
+  document.getElementById('modal-harvest-quantity').value = '';
+  
+  // Reset succession inputs
+  document.getElementById('modal-succession-date').value = '';
+  document.getElementById('modal-succession-interval').value = '';
+  
+  // Display harvest list
+  renderHarvestList(data.harvest || []);
+  
+  // Display succession list
+  renderSuccessionList(data.succession || []);
+  
+  // Reset modal title input
+  document.getElementById('modal-title-input').value = data.name || plant.name;
+  document.getElementById('modal-title-input').style.display = 'none';
+  document.getElementById('modal-title').style.display = 'block';
+  
+  // Hide emoji picker
+  document.getElementById('emoji-picker').style.display = 'none';
 
   // status
   document.querySelectorAll('.status-btn').forEach(b => {
@@ -837,12 +989,16 @@ function openModal(id) {
   
   if (history.length > 0) {
     histSection.style.display = 'block';
-    histList.innerHTML = history.slice(-5).reverse().map(h => `
+    histList.innerHTML = history.slice(-5).reverse().map((h, index) => {
+      const actualIndex = history.length - 1 - index;
+      return `
       <div class="history-item">
         <span class="history-date">${h.date}</span>
-        <span>${h.note || ('Status: ' + h.status)}</span>
+        <span style="flex:1">${h.note || ('Status: ' + h.status)}</span>
+        <button onclick="removeHistoryItem(${actualIndex})" style="background:none;border:none;color:#ff6b6b;cursor:pointer;font-size:16px;padding:0 4px;">✕</button>
       </div>
-    `).join('');
+    `;
+    }).join('');
   } else {
     histSection.style.display = 'none';
   }
@@ -877,24 +1033,287 @@ function saveModal() {
   const status = getSelectedStatus();
   const date = document.getElementById('modal-date').value;
   const noteText = document.getElementById('modal-note').value.trim();
+  const wateringDate = document.getElementById('modal-watering-date').value;
+  
+  // Get name from input if in edit mode, otherwise from display
+  const titleInput = document.getElementById('modal-title-input');
+  const nameInput = titleInput.style.display !== 'none' ? titleInput.value.trim() : document.getElementById('modal-title').textContent.trim();
+  
+  // Get emoji from display
+  const emojiInput = document.getElementById('modal-emoji').textContent.trim();
   
   const existing = getData(currentId);
   const history = existing.history || [];
+  const harvest = existing.harvest || [];
   
   const today = new Date().toLocaleDateString('ro-RO');
-  if (noteText || status !== existing.status) {
+  if (noteText || status !== existing.status || nameInput !== existing.name || emojiInput !== existing.emoji) {
     history.push({ date: today, status, note: noteText });
   }
 
-  gardenData[currentId] = { status, date, note: noteText, history };
+  gardenData[currentId] = { status, date, note: noteText, history, name: nameInput, emoji: emojiInput, wateringDate, harvest, succession };
   saveData(gardenData);
 
   // Update bed dot
   const bed = document.querySelector(`[data-id="${currentId}"]`);
   if (bed) bed.dataset.status = status;
+  
+  // Update emoji in bed if changed
+  if (emojiInput) {
+    const bedEmoji = bed.querySelector('.bed-emoji');
+    if (bedEmoji) bedEmoji.textContent = emojiInput;
+  }
+  
+  // Update name in bed if changed
+  if (nameInput) {
+    const bedName = bed.querySelector('.bed-name');
+    if (bedName) bedName.textContent = nameInput;
+  }
 
   closeModal();
   showToast('✅ Salvat cu succes!');
+}
+
+function addHarvestEntry() {
+  if (!currentId) return;
+  const harvestDate = document.getElementById('modal-harvest-date').value;
+  const harvestQuantity = document.getElementById('modal-harvest-quantity').value.trim();
+  
+  if (!harvestDate || !harvestQuantity) {
+    showToast('⚠️ Data și cantitatea sunt obligatorii!');
+    return;
+  }
+  
+  const existing = getData(currentId);
+  const harvest = existing.harvest || [];
+  harvest.push({ date: harvestDate, quantity: harvestQuantity });
+  gardenData[currentId] = { ...existing, harvest };
+  saveData(gardenData);
+  
+  // Reset inputs
+  document.getElementById('modal-harvest-date').value = '';
+  document.getElementById('modal-harvest-quantity').value = '';
+  
+  // Refresh harvest list
+  renderHarvestList(harvest);
+  showToast('✅ Recoltă adăugată!');
+}
+
+function renderHarvestList(harvest) {
+  const container = document.getElementById('harvest-list');
+  if (!harvest || harvest.length === 0) {
+    container.innerHTML = '<div style="color:#999;font-style:italic;">Nicio recoltă înregistrată</div>';
+    return;
+  }
+  
+  container.innerHTML = harvest.map((h, index) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px;background:#f5f5f5;border-radius:4px;margin-bottom:4px;">
+      <div>
+        <span style="font-weight:700;">${h.date}</span>
+        <span>: ${h.quantity}</span>
+      </div>
+      <span onclick="removeHarvestEntry(${index})" style="cursor:pointer;color:#C0392B;font-size:16px;" title="Șterge">✕</span>
+    </div>
+  `).join('');
+}
+
+function removeHarvestEntry(index) {
+  if (!currentId) return;
+  const existing = getData(currentId);
+  const harvest = existing.harvest || [];
+  
+  if (index >= 0 && index < harvest.length) {
+    harvest.splice(index, 1);
+    gardenData[currentId] = { ...existing, harvest };
+    saveData(gardenData);
+    renderHarvestList(harvest);
+    showToast('🗑️ Recoltă ștearsă');
+  }
+}
+
+function addSuccessionEntry() {
+  if (!currentId) return;
+  const successionDate = document.getElementById('modal-succession-date').value;
+  const successionInterval = document.getElementById('modal-succession-interval').value;
+  
+  if (!successionDate || !successionInterval) {
+    showToast('⚠️ Data și intervalul sunt obligatorii!');
+    return;
+  }
+  
+  const existing = getData(currentId);
+  const succession = existing.succession || [];
+  succession.push({ date: successionDate, interval: parseInt(successionInterval), completed: false });
+  gardenData[currentId] = { ...existing, succession };
+  saveData(gardenData);
+  
+  // Reset inputs
+  document.getElementById('modal-succession-date').value = '';
+  document.getElementById('modal-succession-interval').value = '';
+  
+  // Refresh succession list
+  renderSuccessionList(succession);
+  showToast('✅ Plantare succesivă adăugată!');
+}
+
+function renderSuccessionList(succession) {
+  const container = document.getElementById('succession-list');
+  if (!succession || succession.length === 0) {
+    container.innerHTML = '<div style="color:#999;font-style:italic;">Nicio plantare succesivă programată</div>';
+    return;
+  }
+  
+  const today = new Date().toISOString().split('T')[0];
+  container.innerHTML = succession.map((s, index) => {
+    const isOverdue = s.date < today && !s.completed;
+    const isUpcoming = s.date >= today && !s.completed;
+    const statusStyle = s.completed ? 'color:#27AE60;' : (isOverdue ? 'color:#E74C3C;font-weight:700;' : (isUpcoming ? 'color:#3498DB;' : 'color:#999;'));
+    const statusText = s.completed ? '✓ Completat' : (isOverdue ? '⚠️ Întârziat' : (isUpcoming ? '📅 Programat' : 'Trecut'));
+    
+    return `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px;background:${s.completed ? '#e8f5e9' : (isOverdue ? '#ffebee' : (isUpcoming ? '#e3f2fd' : '#f5f5f5'))};border-radius:4px;margin-bottom:4px;">
+      <div>
+        <span style="font-weight:700;">${s.date}</span>
+        <span>: la fiecare ${s.interval} zile</span>
+        <span style="${statusStyle}margin-left:8px;font-size:10px;">${statusText}</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        ${!s.completed ? `<span onclick="markSuccessionCompleted(${index})" style="cursor:pointer;color:#27AE60;font-size:14px;" title="Marchează ca completat">✓</span>` : ''}
+        <span onclick="removeSuccessionEntry(${index})" style="cursor:pointer;color:#C0392B;font-size:16px;" title="Șterge">✕</span>
+      </div>
+    </div>
+  `;
+  }).join('');
+}
+
+function markSuccessionCompleted(index) {
+  if (!currentId) return;
+  const existing = getData(currentId);
+  const succession = existing.succession || [];
+  
+  if (index >= 0 && index < succession.length) {
+    succession[index].completed = true;
+    gardenData[currentId] = { ...existing, succession };
+    saveData(gardenData);
+    renderSuccessionList(succession);
+    showToast('✅ Plantare marcată ca completată!');
+  }
+}
+
+function removeSuccessionEntry(index) {
+  if (!currentId) return;
+  const existing = getData(currentId);
+  const succession = existing.succession || [];
+  
+  if (index >= 0 && index < succession.length) {
+    succession.splice(index, 1);
+    gardenData[currentId] = { ...existing, succession };
+    saveData(gardenData);
+    renderSuccessionList(succession);
+    showToast('🗑️ Plantare succesivă ștearsă');
+  }
+}
+
+function removeHistoryItem(index) {
+  if (!currentId) return;
+  const existing = getData(currentId);
+  const history = existing.history || [];
+  
+  if (index >= 0 && index < history.length) {
+    history.splice(index, 1);
+    gardenData[currentId] = { ...existing, history };
+    saveData(gardenData);
+    
+    // Refresh history display
+    openModal(currentId);
+    showToast('🗑️ Notă ștearsă');
+  }
+}
+
+function deletePlant() {
+  if (!currentId) return;
+  
+  // Confirm deletion
+  if (!confirm('Ești sigur că vrei să ștergi această plantă? Această acțiune nu poate fi anulată.')) {
+    return;
+  }
+  
+  // Save to history before deleting
+  historyStack.push(JSON.stringify(gardenData));
+  if (historyStack.length > MAX_HISTORY) historyStack.shift();
+  redoStack = [];
+  
+  // Remove from gardenData
+  delete gardenData[currentId];
+  saveData(gardenData);
+  
+  // Remove bed from DOM
+  const bed = document.querySelector(`[data-id="${currentId}"]`);
+  if (bed) {
+    bed.remove();
+  }
+  
+  // Remove from custom plants if it's a custom plant
+  const customIndex = customPlants.findIndex(cp => cp.id === currentId);
+  if (customIndex !== -1) {
+    customPlants.splice(customIndex, 1);
+    localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(customPlants));
+    // Also remove from PLANTS object
+    delete PLANTS[currentId];
+  }
+  
+  closeModal();
+  showToast('🗑️ Plantă ștearsă!');
+  
+  // Refresh current view
+  if (document.getElementById('tab-calendar').classList.contains('active')) {
+    renderCalendar();
+  } else if (document.getElementById('tab-progres').classList.contains('active')) {
+    renderProgress();
+  }
+}
+
+function editModalTitle() {
+  const titleDisplay = document.getElementById('modal-title');
+  const titleInput = document.getElementById('modal-title-input');
+  
+  // Set input value to current title
+  titleInput.value = titleDisplay.textContent;
+  
+  // Hide display, show input
+  titleDisplay.style.display = 'none';
+  titleInput.style.display = 'block';
+  titleInput.focus();
+  titleInput.select();
+}
+
+function saveModalTitleInline() {
+  const titleDisplay = document.getElementById('modal-title');
+  const titleInput = document.getElementById('modal-title-input');
+  
+  const newValue = titleInput.value.trim();
+  
+  if (newValue) {
+    titleDisplay.textContent = newValue;
+  }
+  
+  // Hide input, show display
+  titleInput.style.display = 'none';
+  titleDisplay.style.display = 'block';
+}
+
+function toggleEmojiPicker() {
+  const picker = document.getElementById('emoji-picker');
+  if (picker.style.display === 'none') {
+    picker.style.display = 'block';
+  } else {
+    picker.style.display = 'none';
+  }
+}
+
+function selectEmoji(emoji) {
+  document.getElementById('modal-emoji').textContent = emoji;
+  document.getElementById('emoji-picker').style.display = 'none';
 }
 
 // ============ TOAST ============
@@ -905,18 +1324,623 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+// ============ EXPORT/IMPORT ============
+function exportData() {
+  const exportData = {
+    gardenData: gardenData,
+    customPlants: JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]'),
+    exportDate: new Date().toISOString()
+  };
+  
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `green-thumb-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('💾 Date exportate cu succes!');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (imported.gardenData) {
+        gardenData = imported.gardenData;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(gardenData));
+        
+        if (imported.customPlants) {
+          localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(imported.customPlants));
+          loadCustomPlants();
+        }
+        
+        initBeds();
+        showToast('📂 Date importate cu succes!');
+      }
+    } catch (err) {
+      showToast('❌ Eroare la import!');
+      console.error(err);
+    }
+    event.target.value = ''; // Reset file input
+  };
+  reader.readAsText(file);
+}
+
+// ============ CUSTOM PLANTS ============
+let customPlants = JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]');
+
+function loadCustomPlants() {
+  customPlants = JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]');
+  // Merge custom plants into PLANTS
+  customPlants.forEach(cp => {
+    if (!PLANTS[cp.id]) {
+      PLANTS[cp.id] = {
+        name: cp.name,
+        emoji: cp.emoji,
+        type: cp.type,
+        period: cp.period,
+        obs: cp.obs || ''
+      };
+    }
+  });
+}
+
+function addCustomPlant() {
+  // Only allow adding plants in edit mode
+  if (!editMode) {
+    showToast('⚠️ Activează modul "Editează Grădina" pentru a adăuga plante!');
+    return;
+  }
+  document.getElementById('custom-plant-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCustomPlantModal() {
+  document.getElementById('custom-plant-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  // Reset form
+  document.getElementById('custom-plant-name').value = '';
+  document.getElementById('custom-plant-emoji').value = '🌱';
+  document.getElementById('custom-plant-type').value = 'strat înalt';
+  document.getElementById('custom-plant-period').value = '';
+  document.getElementById('custom-plant-obs').value = '';
+}
+
+function generateUniqueId() {
+  // Generate a short unique numeric ID (8 digits)
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+  return 'custom_' + timestamp + random;
+}
+
+function getBedClassFromPlantType(plantType) {
+  const typeMap = {
+    'strat înalt': 'raised',
+    'strat pământ': 'ground',
+    'micro seră': 'sera',
+    'sol direct': 'ground'
+  };
+  return typeMap[plantType] || 'raised';
+}
+
+function checkCollision(left, top, width, height) {
+  const beds = document.querySelectorAll('.bed');
+  for (let bed of beds) {
+    const bedLeft = parseInt(bed.style.left);
+    const bedTop = parseInt(bed.style.top);
+    const bedWidth = bed.offsetWidth;
+    const bedHeight = bed.offsetHeight;
+    
+    // Check if rectangles overlap
+    if (left < bedLeft + bedWidth &&
+        left + width > bedLeft &&
+        top < bedTop + bedHeight &&
+        top + height > bedTop) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function saveCustomPlant() {
+  const id = generateUniqueId();
+  const name = document.getElementById('custom-plant-name').value.trim();
+  const emoji = document.getElementById('custom-plant-emoji').value.trim() || '🌱';
+  const type = document.getElementById('custom-plant-type').value;
+  const period = document.getElementById('custom-plant-period').value.trim();
+  const obs = document.getElementById('custom-plant-obs').value.trim();
+  
+  if (!name) {
+    showToast('⚠️ Numele este obligatoriu!');
+    return;
+  }
+  
+  if (PLANTS[id]) {
+    // Try again if collision occurs
+    return saveCustomPlant();
+  }
+  
+  // Save to history
+  historyStack.push(JSON.stringify(gardenData));
+  if (historyStack.length > MAX_HISTORY) historyStack.shift();
+  redoStack = [];
+  
+  // Add to custom plants
+  const newPlant = { id, name, emoji, type, period, obs };
+  customPlants.push(newPlant);
+  localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(customPlants));
+  
+  // Add to PLANTS
+  PLANTS[id] = { name, emoji, type, period, obs };
+  
+  // Initialize data for new plant
+  gardenData[id] = { status: 'neplantat', date: '', note: '', history: [] };
+  
+  // Track this plant as added during edit mode
+  if (editMode) {
+    plantsAddedDuringEdit.push(id);
+  } else {
+    // Save if not in edit mode
+    saveData(gardenData);
+  }
+  
+  // Create bed in garden-inner
+  const gardenInner = document.querySelector('.garden-inner');
+  const bedClass = getBedClassFromPlantType(type);
+  
+  // Find a non-overlapping position (top-left corner default)
+  let left = 10, top = 10, width = 80, height = 75;
+  let attempts = 0;
+  while (checkCollision(left, top, width, height) && attempts < 100) {
+    left += 90; // Move right
+    if (left > 600) {
+      left = 10;
+      top += 85; // Move down
+    }
+    if (top > 200) {
+      left = 10;
+      top = 10;
+    }
+    attempts++;
+  }
+  
+  const bed = document.createElement('div');
+  bed.className = `bed ${bedClass}`;
+  bed.dataset.id = id;
+  bed.onclick = () => openModal(id);
+  bed.style.cssText = `position:absolute;top:${top}px;left:${left}px;width:${width}px;height:${height}px;`;
+  bed.draggable = true;
+  bed.innerHTML = `
+    <div class="bed-emoji">${emoji}</div>
+    <div class="bed-name">${name}</div>
+    <div class="bed-type-badge">${type}</div>
+    <div class="resize-handle" style="position:absolute;bottom:0;right:0;width:15px;height:15px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:0 0 10px 0;" onmousedown="handleResizeStart(event)"></div>
+  `;
+  
+  // Add drag functionality
+  bed.addEventListener('dragstart', handleDragStart);
+  bed.addEventListener('dragend', handleDragEnd);
+  
+  gardenInner.appendChild(bed);
+  
+  closeCustomPlantModal();
+  showToast('✅ Plantă adăugată! Trage pentru poziționare.');
+  
+  // Refresh current view if on calendar or progress
+  if (document.getElementById('tab-calendar').classList.contains('active')) {
+    renderCalendar();
+  } else if (document.getElementById('tab-progres').classList.contains('active')) {
+    renderProgress();
+  }
+}
+
+// Drag and drop functionality
+let draggedBed = null;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+
+// Resize functionality
+let resizingBed = null;
+let resizeStartWidth = 0;
+let resizeStartHeight = 0;
+let resizeStartX = 0;
+let resizeStartY = 0;
+
+function handleResizeStart(e) {
+  // Only allow resize in edit mode
+  if (!editMode) return;
+  
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+  
+  resizingBed = e.target.closest('.bed');
+  if (!resizingBed) return;
+  
+  // Temporarily disable click handler
+  resizingBed.style.pointerEvents = 'none';
+  
+  resizeStartWidth = resizingBed.offsetWidth;
+  resizeStartHeight = resizingBed.offsetHeight;
+  resizeStartX = e.clientX;
+  resizeStartY = e.clientY;
+  
+  resizingBed.classList.add('resizing');
+  
+  document.addEventListener('mousemove', handleResizeMove);
+  document.addEventListener('mouseup', handleResizeEnd);
+}
+
+function handleResizeMove(e) {
+  if (!resizingBed) return;
+  
+  const deltaX = e.clientX - resizeStartX;
+  const deltaY = e.clientY - resizeStartY;
+  
+  const newWidth = Math.max(50, resizeStartWidth + deltaX);
+  const newHeight = Math.max(50, resizeStartHeight + deltaY);
+  
+  // Check collision with new dimensions
+  const currentLeft = parseInt(resizingBed.style.left);
+  const currentTop = parseInt(resizingBed.style.top);
+  
+  if (!checkCollision(currentLeft, currentTop, newWidth, newHeight, resizingBed)) {
+    resizingBed.style.width = newWidth + 'px';
+    resizingBed.style.height = newHeight + 'px';
+  }
+}
+
+function handleResizeEnd(e) {
+  if (!resizingBed) return;
+  
+  resizingBed.classList.remove('resizing');
+  
+  // Save dimensions to gardenData (only in memory if in edit mode)
+  const bedId = resizingBed.dataset.id;
+  if (bedId && gardenData[bedId]) {
+    gardenData[bedId].dimensions = {
+      width: resizingBed.offsetWidth,
+      height: resizingBed.offsetHeight
+    };
+    
+    // Only save to localStorage if NOT in edit mode
+    if (!editMode) {
+      saveData(gardenData);
+    }
+  }
+  
+  // Re-enable click handler
+  setTimeout(() => {
+    if (resizingBed) {
+      resizingBed.style.pointerEvents = 'auto';
+    }
+  }, 200);
+  
+  document.removeEventListener('mousemove', handleResizeMove);
+  document.removeEventListener('mouseup', handleResizeEnd);
+  
+  resizingBed = null;
+}
+
+function checkCollision(left, top, width, height, excludeBed = null) {
+  const beds = document.querySelectorAll('.bed');
+  for (let bed of beds) {
+    if (bed === excludeBed) continue;
+    
+    const bedLeft = parseInt(bed.style.left);
+    const bedTop = parseInt(bed.style.top);
+    const bedWidth = bed.offsetWidth;
+    const bedHeight = bed.offsetHeight;
+    
+    // Check if rectangles overlap
+    if (left < bedLeft + bedWidth &&
+        left + width > bedLeft &&
+        top < bedTop + bedHeight &&
+        top + height > bedTop) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function handleDragStart(e) {
+  // Only allow drag in edit mode
+  if (!editMode) {
+    e.preventDefault();
+    return;
+  }
+  
+  draggedBed = e.target.closest('.bed');
+  if (!draggedBed) return;
+  
+  const rect = draggedBed.getBoundingClientRect();
+  dragOffsetX = e.clientX - rect.left;
+  dragOffsetY = e.clientY - rect.top;
+  
+  e.dataTransfer.effectAllowed = 'move';
+  draggedBed.style.opacity = '0.5';
+}
+
+function handleDragEnd(e) {
+  if (!draggedBed) return;
+  
+  const gardenInner = document.querySelector('.garden-inner');
+  const innerRect = gardenInner.getBoundingClientRect();
+  
+  let newLeft = e.clientX - innerRect.left - dragOffsetX;
+  let newTop = e.clientY - innerRect.top - dragOffsetY;
+  
+  // Constrain to garden-inner bounds
+  const bedWidth = draggedBed.offsetWidth;
+  const bedHeight = draggedBed.offsetHeight;
+  const innerWidth = innerRect.width;
+  const innerHeight = innerRect.height;
+  
+  newLeft = Math.max(0, Math.min(newLeft, innerWidth - bedWidth));
+  newTop = Math.max(0, Math.min(newTop, innerHeight - bedHeight));
+  
+  // Check for collision
+  if (checkCollision(newLeft, newTop, bedWidth, bedHeight)) {
+    showToast('⚠️ Suprapunere nepermisă!');
+    draggedBed.style.opacity = '1';
+    draggedBed = null;
+    return;
+  }
+  
+  draggedBed.style.left = newLeft + 'px';
+  draggedBed.style.top = newTop + 'px';
+  draggedBed.style.opacity = '1';
+  
+  // Save position to gardenData (only in memory if in edit mode)
+  const bedId = draggedBed.dataset.id;
+  if (bedId && gardenData[bedId]) {
+    gardenData[bedId].position = { left: newLeft, top: newTop };
+    
+    // Only save to localStorage and history if NOT in edit mode
+    if (!editMode) {
+      saveData(gardenData);
+    }
+  }
+  
+  draggedBed = null;
+}
+
+// Make garden-inner accept drops
+document.addEventListener('DOMContentLoaded', () => {
+  const gardenInner = document.querySelector('.garden-inner');
+  if (gardenInner) {
+    gardenInner.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    gardenInner.addEventListener('drop', (e) => {
+      e.preventDefault();
+    });
+  }
+});
+
 // ============ CALENDAR ============
+function getCurrentSeason() {
+  const month = new Date().getMonth(); // 0-11
+  if (month >= 2 && month <= 4) return { name: 'Primăvară', emoji: '🌸', color: '#FFB7B2' };
+  if (month >= 5 && month <= 7) return { name: 'Vară', emoji: '☀️', color: '#FFDAC1' };
+  if (month >= 8 && month <= 10) return { name: 'Toamnă', emoji: '🍂', color: '#E2F0CB' };
+  return { name: 'Iarnă', emoji: '❄️', color: '#B5EAD7' };
+}
+
+function isPlantingSeason(plantPeriod) {
+  const month = new Date().getMonth();
+  const currentSeason = getCurrentSeason().name;
+  
+  // Simple season matching based on period text
+  if (plantPeriod.toLowerCase().includes('martie') || plantPeriod.toLowerCase().includes('april') || plantPeriod.toLowerCase().includes('mai')) {
+    return month >= 2 && month <= 4; // Spring: March-May
+  }
+  if (plantPeriod.toLowerCase().includes('iunie') || plantPeriod.toLowerCase().includes('iulie') || plantPeriod.toLowerCase().includes('august')) {
+    return month >= 5 && month <= 7; // Summer: June-August
+  }
+  if (plantPeriod.toLowerCase().includes('septembrie') || plantPeriod.toLowerCase().includes('octombrie')) {
+    return month >= 8 && month <= 10; // Fall: September-October
+  }
+  if (plantPeriod.toLowerCase().includes('perene')) {
+    return true; // Perennials are always in season
+  }
+  return false;
+}
+
+function needsWatering(wateringDate) {
+  if (!wateringDate) return false;
+  const lastWatered = new Date(wateringDate);
+  const today = new Date();
+  const daysSinceWatering = Math.floor((today - lastWatered) / (1000 * 60 * 60 * 24));
+  return daysSinceWatering >= 3; // Needs watering after 3 days
+}
+
+function calculateExpectedHarvestDate(plantingDate, plantPeriod) {
+  if (!plantingDate) return null;
+  
+  // Estimate harvest date based on plant type (simplified)
+  const planted = new Date(plantingDate);
+  
+  // Default growth periods in days
+  if (plantPeriod.toLowerCase().includes('ridichi')) return new Date(planted.getTime() + 25 * 24 * 60 * 60 * 1000); // 25 days
+  if (plantPeriod.toLowerCase().includes('spanac') || plantPeriod.toLowerCase().includes('salată')) return new Date(planted.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+  if (plantPeriod.toLowerCase().includes('mazare')) return new Date(planted.getTime() + 60 * 24 * 60 * 60 * 1000); // 60 days
+  if (plantPeriod.toLowerCase().includes('ceapă')) return new Date(planted.getTime() + 90 * 24 * 60 * 60 * 1000); // 90 days
+  if (plantPeriod.toLowerCase().includes('rosii') || plantPeriod.toLowerCase().includes('tomate')) return new Date(planted.getTime() + 75 * 24 * 60 * 60 * 1000); // 75 days
+  if (plantPeriod.toLowerCase().includes('cartof')) return new Date(planted.getTime() + 100 * 24 * 60 * 60 * 1000); // 100 days
+  if (plantPeriod.toLowerCase().includes('dovleac')) return new Date(planted.getTime() + 90 * 24 * 60 * 60 * 1000); // 90 days
+  if (plantPeriod.toLowerCase().includes('capsuni')) return new Date(planted.getTime() + 70 * 24 * 60 * 60 * 1000); // 70 days
+  if (plantPeriod.toLowerCase().includes('perene')) return null; // Perennials don't have harvest date
+  
+  // Default 60 days
+  return new Date(planted.getTime() + 60 * 24 * 60 * 60 * 1000);
+}
+
+function getSeasonalRecommendations() {
+  const month = new Date().getMonth();
+  const season = getCurrentSeason().name;
+  
+  const recommendations = {
+    'Primăvară': ['Mazăre', 'Spanac', 'Salată', 'Ridichi', 'Ceapă', 'Cartofi timpurii'],
+    'Vară': ['Roșii', 'Dovleac', 'Ardei', 'Castraveți', 'Vinete'],
+    'Toamnă': ['Varză', 'Salată de toamnă', 'Spanac de toamnă', 'Ceapă de toamnă'],
+    'Iarnă': ['Varză de iarnă', 'Spanac de iarnă']
+  };
+  
+  return recommendations[season] || [];
+}
+
+function calculateHarvestForecast() {
+  const forecast = [];
+  const ids = Object.keys(PLANTS).filter(id => document.querySelector(`[data-id="${id}"]`));
+  
+  ids.forEach(id => {
+    const data = getData(id);
+    const plant = PLANTS[id];
+    
+    if (data.status === 'plantat' || data.status === 'incoltat') {
+      const expectedDate = calculateExpectedHarvestDate(data.date, plant.period);
+      if (expectedDate) {
+        const harvestHistory = data.harvest || [];
+        const avgYield = harvestHistory.length > 0 
+          ? (harvestHistory.reduce((sum, h) => sum + (parseFloat(h.quantity) || 0), 0) / harvestHistory.length).toFixed(1)
+          : '1.0'; // Default estimate
+        
+        forecast.push({
+          plant: data.name || plant.name,
+          emoji: data.emoji || plant.emoji,
+          expectedDate: expectedDate.toISOString().split('T')[0],
+          expectedYield: avgYield + ' kg'
+        });
+      }
+    }
+  });
+  
+  return forecast.sort((a, b) => new Date(a.expectedDate) - new Date(b.expectedDate));
+}
+
+function calculatePlantingToHarvestTimeline() {
+  const timeline = [];
+  const ids = Object.keys(PLANTS).filter(id => document.querySelector(`[data-id="${id}"]`));
+  
+  ids.forEach(id => {
+    const data = getData(id);
+    const plant = PLANTS[id];
+    const harvest = data.harvest || [];
+    
+    if (data.date && harvest.length > 0) {
+      const planted = new Date(data.date);
+      const firstHarvest = new Date(harvest[0].date);
+      const daysToHarvest = Math.floor((firstHarvest - planted) / (1000 * 60 * 60 * 24));
+      
+      if (daysToHarvest > 0) {
+        timeline.push({
+          plant: data.name || plant.name,
+          emoji: data.emoji || plant.emoji,
+          daysToHarvest: daysToHarvest
+        });
+      }
+    }
+  });
+  
+  return timeline.sort((a, b) => a.daysToHarvest - b.daysToHarvest);
+}
+
 function renderCalendar() {
   const container = document.getElementById('calendar-list');
-  container.innerHTML = Object.entries(PLANTS).map(([id, plant]) => {
+  const season = getCurrentSeason();
+  
+  // Add season indicator at top of calendar
+  const seasonIndicator = document.getElementById('season-indicator') || document.createElement('div');
+  seasonIndicator.id = 'season-indicator';
+  seasonIndicator.style.cssText = 'padding:8px 12px;font-weight:700;text-align:right;font-size:16px;color:#fff;margin-bottom:12px;';
+  
+  const recommendations = getSeasonalRecommendations();
+  seasonIndicator.textContent = season.emoji + ' Sezon curent: ' + season.name + (recommendations.length > 0 ? ' | Recomandat: ' + recommendations.slice(0, 3).join(', ') : '');
+  
+  const calendarContainer = document.getElementById('calendar-list').parentElement;
+  
+  if (!calendarContainer.querySelector('#season-indicator')) {
+    calendarContainer.insertBefore(seasonIndicator, document.getElementById('calendar-list'));
+  } else {
+    calendarContainer.replaceChild(seasonIndicator, calendarContainer.querySelector('#season-indicator'));
+  }
+  
+  // Add succession planting reminder section
+  const today = new Date().toISOString().split('T')[0];
+  const upcomingSuccession = [];
+  Object.keys(gardenData).forEach(id => {
+    const succession = gardenData[id].succession || [];
+    succession.forEach(s => {
+      if (s.date >= today && !s.completed) {
+        const plant = PLANTS[id];
+        const data = getData(id);
+        upcomingSuccession.push({
+          plant: data.name || plant.name,
+          emoji: data.emoji || plant.emoji,
+          date: s.date,
+          interval: s.interval
+        });
+      }
+    });
+  });
+  
+  if (upcomingSuccession.length > 0) {
+    const successionSection = document.getElementById('succession-reminder') || document.createElement('div');
+    successionSection.id = 'succession-reminder';
+    successionSection.style.cssText = 'background:#e3f2fd;padding:12px;border-radius:8px;margin-bottom:12px;border-left:4px solid #3498DB;';
+    successionSection.innerHTML = `
+      <div style="font-weight:700;font-size:13px;color:#1976D2;margin-bottom:8px;">🔄 Plantări succesive programate</div>
+      ${upcomingSuccession.slice(0, 5).sort((a, b) => new Date(a.date) - new Date(b.date)).map(s => `
+        <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #bbdefb;">
+          <span style="font-size:16px;">${s.emoji}</span>
+          <span style="flex:1;font-size:12px;">${s.plant}</span>
+          <span style="font-size:10px;color:#1976D2;font-weight:700;">${s.date}</span>
+          <span style="font-size:10px;color:#666;">la ${s.interval} zile</span>
+        </div>
+      `).join('')}
+    `;
+    
+    if (!calendarContainer.querySelector('#succession-reminder')) {
+      calendarContainer.insertBefore(successionSection, document.getElementById('calendar-list'));
+    } else {
+      calendarContainer.replaceChild(successionSection, calendarContainer.querySelector('#succession-reminder'));
+    }
+  } else {
+    const existingReminder = calendarContainer.querySelector('#succession-reminder');
+    if (existingReminder) {
+      existingReminder.remove();
+    }
+  }
+  
+  // Only show plants that have beds in garden-inner
+  const plantsInGarden = Object.entries(PLANTS).filter(([id]) => {
+    return document.querySelector(`[data-id="${id}"]`);
+  });
+  
+  container.innerHTML = plantsInGarden.map(([id, plant]) => {
     const data = getData(id);
     const statusClass = data.status || 'neplantat';
     const statusLabels = { neplantat:'Neplantat', plantat:'Plantat', incoltat:'Încolțit', recoltat:'Recoltat', perena:'Planta Perena', problema:'Problemă' };
     const statusIcons = { neplantat:'⬜', plantat:'🌱', incoltat:'🌿', recoltat:'🧺', perena:'🌸', problema:'⚠️' };
+    const displayEmoji = data.emoji || plant.emoji;
+    const displayName = data.name || plant.name;
+    const history = data.history || [];
+    const isInSeason = isPlantingSeason(plant.period);
+    const seasonBorder = isInSeason ? '2px solid ' + season.color : 'none';
+    const seasonBadge = isInSeason ? `<div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);background:${season.color};padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;z-index:10;">🌱 În sezon</div>` : '';
+    
     return `
-      <div class="calendar-card">
+      <div class="calendar-card" style="border:${seasonBorder};position:relative;">
+        ${seasonBadge}
         <div class="calendar-card-header">
-          <div class="plant-name">${plant.emoji} ${plant.name}</div>
+          <div class="plant-name">${displayEmoji} ${displayName}</div>
           <div class="status-pill ${statusClass}">${statusIcons[statusClass]} ${statusLabels[statusClass]}</div>
         </div>
         <div class="calendar-card-body">
@@ -933,7 +1957,18 @@ function renderCalendar() {
             <div class="chip-value">${plant.obs}</div>
           </div>
           ${data.date ? `<div class="info-chip" style="grid-column:span 2;"><div class="chip-label">Data plantată</div><div class="chip-value">${data.date}</div></div>` : ''}
-          ${(data.history||[]).length > 0 && (data.history[data.history.length-1].note) ? `<div class="info-chip" style="grid-column:span 2;"><div class="chip-label">Ultima notă</div><div class="chip-value">${data.history[data.history.length-1].note}</div></div>` : ''}
+          ${data.date && data.status !== 'recoltat' && !plant.period.toLowerCase().includes('perene') ? (() => {
+            const expectedHarvest = calculateExpectedHarvestDate(data.date, plant.period);
+            return expectedHarvest ? `<div class="info-chip" style="grid-column:span 2;"><div class="chip-label">📅 Recoltă estimată</div><div class="chip-value">${expectedHarvest.toISOString().split('T')[0]}</div></div>` : '';
+          })() : ''}
+          ${data.wateringDate ? `<div class="info-chip" style="grid-column:span 2;"><div class="chip-label">📅 Ultima udare</div><div class="chip-value">${data.wateringDate} ${needsWatering(data.wateringDate) ? '<span style="color:#E74C3C;font-weight:700;margin-left:8px;">⚠️ Necesită udare!</span>' : ''}</div></div>` : ''}
+          ${history.length > 0 ? `<div class="info-chip" style="grid-column:span 2;"><div class="chip-label">Istoric notițe</div><div class="chip-value" style="font-size:10px;">${history.slice(-5).reverse().map(h => `<div style="border-bottom:1px solid #eee;padding:2px 0;">${h.date}: ${h.note || ('Status: ' + h.status)}</div>`).join('')}</div></div>` : ''}
+          ${(data.harvest||[]).length > 0 ? `<div class="info-chip" style="grid-column:span 2;"><div class="chip-label">🧺 Recoltă</div><div class="chip-value" style="font-size:10px;">${data.harvest.slice(-3).reverse().map(h => `<div style="border-bottom:1px solid #eee;padding:2px 0;">${h.date}: ${h.quantity}</div>`).join('')}</div></div>` : ''}
+          ${(data.succession||[]).length > 0 ? (() => {
+            const today = new Date().toISOString().split('T')[0];
+            const upcoming = data.succession.filter(s => s.date >= today && !s.completed);
+            return upcoming.length > 0 ? `<div class="info-chip" style="grid-column:span 2;"><div class="chip-label">🔄 Plantare succesivă</div><div class="chip-value" style="font-size:10px;">${upcoming.slice(0, 2).map(s => `<div style="border-bottom:1px solid #eee;padding:2px 0;color:#3498DB;">${s.date} (la ${s.interval} zile)</div>`).join('')}</div></div>` : '';
+          })() : ''}
         </div>
       </div>
     `;
@@ -942,46 +1977,149 @@ function renderCalendar() {
 
 // ============ PROGRESS ============
 function renderProgress() {
-  const ids = Object.keys(PLANTS);
-  let planted = 0, harvested = 0, sprouted = 0, perena = 0, problems = 0;
-  
-  ids.forEach(id => {
-    const d = getData(id);
-    if (d.status === 'plantat') planted++;
-    else if (d.status === 'recoltat') harvested++;
-    else if (d.status === 'incoltat') sprouted++;
-    else if (d.status === 'perena') perena++;
-    else if (d.status === 'problema') problems++;
+  // Count plants that have beds in the garden-inner
+  const allIds = Object.keys(PLANTS);
+  const ids = Object.keys(PLANTS).filter(id => document.querySelector(`[data-id="${id}"]`));
+  let planted = 0, harvested = 0, sprouted = 0, perena = 0, problems = 0, totalHarvestQty = 0, neplantat = 0;
+  allIds.forEach(id => {
+    const s = getData(id).status;
+    if (s === 'plantat') planted++;
+    if (s === 'recoltat') harvested++;
+    if (s === 'incoltat') sprouted++;
+    if (s === 'perena') perena++;
+    if (s === 'problema') problems++;
+    if (s === 'neplantat') neplantat++;
+    
+    // Count total harvest quantity
+    const harvest = getData(id).harvest || [];
+    harvest.forEach(h => {
+      const qty = parseFloat(h.quantity) || 0;
+      totalHarvestQty += qty;
+    });
   });
-
-  const active = planted + harvested + sprouted;
   const total = ids.length;
-  const pct = Math.round((active / total) * 100);
+  const pct = total ? Math.round((planted+harvested+sprouted+perena) / total * 100) : 0;
 
-  document.getElementById('stat-planted').textContent = active;
-  document.getElementById('stat-total').textContent = total;
   document.getElementById('main-progress').style.width = pct + '%';
+  document.getElementById('stat-planted').textContent = planted;
+  document.getElementById('stat-total').textContent = total;
 
-  const listEl = document.getElementById('progress-list');
-  listEl.innerHTML = `
-    <div class="stats-row">
+  // Calculate plant density (plants per garden area)
+  const gardenInner = document.querySelector('.garden-inner');
+  const gardenArea = gardenInner ? (gardenInner.offsetWidth * gardenInner.offsetHeight) / 10000 : 0; // in cm²
+  const plantDensity = gardenArea > 0 ? (total / gardenArea * 10000).toFixed(2) : 0;
+
+  const container = document.getElementById('progress-list');
+  container.innerHTML = `
+    <div class="progress-card">
+      <div class="field-label">Stadiu Plante</div>
+      <div class="stats-row">
       <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🌱</span><span class="progress-plant-name">Plantate</span><strong style="color:var(--green-mid)">${planted}</strong></div></div>
       <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🌿</span><span class="progress-plant-name">Încolțite</span><strong style="color:var(--accent-yellow)">${sprouted}</strong></div></div>
       <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🧺</span><span class="progress-plant-name">Recoltate</span><strong style="color:var(--accent-blue)">${harvested}</strong></div></div>
       <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🌸</span><span class="progress-plant-name">Planta Perena</span><strong style="color:#E91E63">${perena}</strong></div></div>
-      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">⚠️</span><span class="progress-plant-name">Probleme</span><strong style="color:var(--accent-red)">${problems}</strong></div></div>
+      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">⚠️</span><span class="progress-plant-name">Uscate</span><strong style="color:var(--accent-red)">${problems}</strong></div></div>
+      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🔄</span><span class="progress-plant-name">Plantări succesive</span><strong style="color:#3498DB">${(() => {
+        const today = new Date().toISOString().split('T')[0];
+        let count = 0;
+        allIds.forEach(id => {
+          const succession = getData(id).succession || [];
+          succession.forEach(s => {
+            if (s.date >= today && !s.completed) count++;
+          });
+        });
+        return count;
+      })()}</strong></div></div>
+    </div>
+    </div>
+    <div class="progress-card">
+      <div class="field-label">Statistici</div>
+      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🌱</span><span class="progress-plant-name">Plante</span><strong>${total}</strong></div></div>
+      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">📏</span><span class="progress-plant-name">Densitate plante</span><strong>${plantDensity} / m²</strong></div></div>
+      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🌿</span><span class="progress-plant-name">Încolțite</span><strong style="color:var(--accent-yellow)">${sprouted}</strong></div></div>
+      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🧺</span><span class="progress-plant-name">Recoltate</span><strong style="color:var(--accent-blue)">${harvested}</strong></div></div>
+      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">📦</span><span class="progress-plant-name">Total Recoltat</span><strong style="color:var(--accent-green)">${totalHarvestQty} kg</strong></div></div>
+      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">💧</span><span class="progress-plant-name">Necesită udare</span><strong style="color:#3498DB">${ids.filter(id => needsWatering(getData(id).wateringDate)).length}</strong></div></div>
+      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🌸</span><span class="progress-plant-name">Planta Perena</span><strong style="color:#E91E63">${perena}</strong></div></div>
+      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">⚠️</span><span class="progress-plant-name">Uscate</span><strong style="color:var(--accent-red)">${problems}</strong></div></div>
+    </div>
+    <div class="progress-card">
+      <div class="field-label">Prognoză Recoltă</div>
+      ${(() => {
+        const forecast = calculateHarvestForecast();
+        if (forecast.length === 0) return '<div style="color:#999;font-style:italic;font-size:12px;">Nicio recoltă estimată</div>';
+        return forecast.slice(0, 5).map(f => `
+          <div style="display:flex;align-items:center;gap:8px;padding:4px;background:#f5f5f5;border-radius:4px;margin-bottom:4px;">
+            <span style="font-size:16px;">${f.emoji}</span>
+            <span style="flex:1;font-size:12px;">${f.plant}</span>
+            <span style="font-size:10px;color:#666;">${f.expectedDate}</span>
+            <span style="font-size:10px;font-weight:700;color:var(--accent-green);">${f.expectedYield}</span>
+          </div>
+        `).join('');
+      })()}
+    </div>
+    <div class="progress-card">
+      <div class="field-label">Timp Plantare → Recoltă</div>
+      ${(() => {
+        const timeline = calculatePlantingToHarvestTimeline();
+        if (timeline.length === 0) return '<div style="color:#999;font-style:italic;font-size:12px;">Nicio recoltă înregistrată</div>';
+        return timeline.slice(0, 5).map(t => `
+          <div style="display:flex;align-items:center;gap:8px;padding:4px;background:#f5f5f5;border-radius:4px;margin-bottom:4px;">
+            <span style="font-size:16px;">${t.emoji}</span>
+            <span style="flex:1;font-size:12px;">${t.plant}</span>
+            <span style="font-size:10px;font-weight:700;color:var(--accent-blue);">${t.daysToHarvest} zile</span>
+          </div>
+        `).join('');
+      })()}
+    </div>
+    <div class="progress-card">
+      <div class="field-label">🔄 Plantări succesive necesare</div>
+      ${(() => {
+        const today = new Date();
+        const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const urgentSuccession = [];
+        allIds.forEach(id => {
+          const succession = getData(id).succession || [];
+          succession.forEach(s => {
+            if (s.date >= today.toISOString().split('T')[0] && s.date <= nextWeek && !s.completed) {
+              const plant = PLANTS[id];
+              const data = getData(id);
+              urgentSuccession.push({
+                plant: data.name || plant.name,
+                emoji: data.emoji || plant.emoji,
+                date: s.date,
+                interval: s.interval
+              });
+            }
+          });
+        });
+        if (urgentSuccession.length === 0) return '<div style="color:#999;font-style:italic;font-size:12px;">Nicio plantare succesivă programată pentru săptămâna aceasta</div>';
+        return urgentSuccession.sort((a, b) => new Date(a.date) - new Date(b.date)).map(s => `
+          <div style="display:flex;align-items:center;gap:8px;padding:4px;background:#fff3e0;border-radius:4px;margin-bottom:4px;border-left:3px solid #FF9800;">
+            <span style="font-size:16px;">${s.emoji}</span>
+            <span style="flex:1;font-size:12px;">${s.plant}</span>
+            <span style="font-size:10px;color:#FF9800;font-weight:700;">${s.date}</span>
+            <span style="font-size:10px;color:#666;">la ${s.interval} zile</span>
+          </div>
+        `).join('');
+      })()}
     </div>
     <div class="progress-card">
       <div class="field-label">Detalii per plantă</div>
       ${ids.map(id => {
         const plant = PLANTS[id];
         const d = getData(id);
+        const displayEmoji = d.emoji || plant.emoji;
+        const displayName = d.name || plant.name;
         const statusColors = { neplantat:'#ccc', plantat:'var(--green-light)', incoltat:'var(--accent-yellow)', recoltat:'var(--accent-blue)', perena:'#E91E63', problema:'var(--accent-red)' };
         const statusPct = { neplantat:0, plantat:33, incoltat:66, recoltat:100, perena:50, problema:15 };
+        const harvest = d.harvest || [];
+        const lastHarvest = harvest.length > 0 ? harvest[harvest.length - 1].quantity : '-';
         return `
           <div class="progress-plant-row" style="margin-top:10px;">
-            <span style="font-size:18px">${plant.emoji}</span>
-            <span class="progress-plant-name" style="font-size:12px;">${plant.name}</span>
+            <span style="font-size:18px">${displayEmoji}</span>
+            <span class="progress-plant-name" style="font-size:12px;">${displayName}</span>
+            <span style="font-size:10px;color:#666;margin-left:auto;">📦 ${lastHarvest}</span>
           </div>
           <div class="progress-wrap">
             <div class="progress-fill" style="width:${statusPct[d.status||'neplantat']}%; background:${statusColors[d.status||'neplantat']};"></div>
@@ -995,12 +2133,240 @@ function renderProgress() {
 // Init: sync statuses from stored data to beds
 function initBeds() {
   Object.entries(gardenData).forEach(([id, data]) => {
-    const bed = document.querySelector(`[data-id="${id}"]`);
-    if (bed && data.status) bed.dataset.status = data.status;
+    let bed = document.querySelector(`[data-id="${id}"]`);
+    
+    // If bed doesn't exist in DOM but exists in gardenData (custom plant), create it
+    if (!bed && data.position) {
+      const plant = PLANTS[id];
+      if (plant) {
+        const gardenInner = document.querySelector('.garden-inner');
+        const bedClass = getBedClassFromPlantType(plant.type);
+        
+        bed = document.createElement('div');
+        bed.className = `bed ${bedClass}`;
+        bed.dataset.id = id;
+        bed.onclick = () => openModal(id);
+        const bedWidth = data.dimensions?.width || 80;
+        const bedHeight = data.dimensions?.height || 75;
+        bed.style.cssText = `position:absolute;top:${data.position.top}px;left:${data.position.left}px;width:${bedWidth}px;height:${bedHeight}px;`;
+        bed.draggable = true;
+        bed.innerHTML = `
+          <div class="bed-emoji">${data.emoji || plant.emoji}</div>
+          <div class="bed-name">${data.name || plant.name}</div>
+          <div class="bed-type-badge">${plant.type}</div>
+          <div class="resize-handle" style="position:absolute;bottom:0;right:0;width:15px;height:15px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:0 0 10px 0;" onmousedown="handleResizeStart(event)"></div>
+        `;
+        
+        // Add drag functionality
+        bed.addEventListener('dragstart', handleDragStart);
+        bed.addEventListener('dragend', handleDragEnd);
+        
+        gardenInner.appendChild(bed);
+      }
+    }
+    
+    // Skip if bed is null (plant data exists but no DOM element)
+    if (!bed) return;
+    
+    if (data.status) bed.dataset.status = data.status;
+    if (data.emoji) {
+      const bedEmoji = bed.querySelector('.bed-emoji');
+      if (bedEmoji) bedEmoji.textContent = data.emoji;
+    }
+    if (data.name) {
+      const bedName = bed.querySelector('.bed-name');
+      if (bedName) bedName.textContent = data.name;
+    }
+    
+    // Restore position if saved
+    if (data.position) {
+      bed.style.left = data.position.left + 'px';
+      bed.style.top = data.position.top + 'px';
+    }
+    
+    // Restore dimensions if saved
+    if (data.dimensions) {
+      bed.style.width = data.dimensions.width + 'px';
+      bed.style.height = data.dimensions.height + 'px';
+    }
+    
+    // Add drag functionality to existing beds if they don't have it
+    if (!bed.draggable) {
+      bed.draggable = true;
+      bed.addEventListener('dragstart', handleDragStart);
+      bed.addEventListener('dragend', handleDragEnd);
+    }
+    
+    // Add resize handle if not present
+    if (!bed.querySelector('.resize-handle')) {
+      const resizeHandle = document.createElement('div');
+      resizeHandle.className = 'resize-handle';
+      resizeHandle.style.cssText = 'position:absolute;bottom:0;right:0;width:15px;height:15px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:0 0 10px 0;display:none;';
+      resizeHandle.onmousedown = handleResizeStart;
+      bed.appendChild(resizeHandle);
+    } else {
+      // Hide resize handles by default
+      const existingHandle = bed.querySelector('.resize-handle');
+      if (existingHandle) existingHandle.style.display = 'none';
+    }
   });
+  
   // Set today as default date in modal
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('modal-date').value = today;
+}
+
+// Edit mode functions
+function toggleEditMode() {
+  editMode = !editMode;
+  const editBtn = document.getElementById('edit-mode-btn');
+  const editControls = document.getElementById('edit-mode-controls');
+  const addPlantBtn = document.getElementById('add-plant-btn');
+  
+  if (editMode) {
+    // Enter edit mode
+    editBtn.textContent = '✏️ Editare activă';
+    editBtn.style.background = '#E67E22';
+    editControls.style.display = 'flex';
+    addPlantBtn.style.display = 'block';
+    
+    // Track plants added during this edit session
+    plantsAddedDuringEdit = [];
+    
+    // Ensure all beds have drag functionality
+    const beds = document.querySelectorAll('.bed');
+    beds.forEach(bed => {
+      if (!bed.draggable) {
+        bed.draggable = true;
+        bed.addEventListener('dragstart', handleDragStart);
+        bed.addEventListener('dragend', handleDragEnd);
+      }
+    });
+    
+    // First, update gardenData with current DOM state (capture positions)
+    beds.forEach(bed => {
+      const id = bed.dataset.id;
+      // Ensure data exists for this bed
+      if (!gardenData[id]) {
+        gardenData[id] = { status: 'neplantat', date: '', note: '', history: [] };
+      }
+      const data = gardenData[id];
+      if (data) {
+        // Always update with current DOM state
+        const computedStyle = window.getComputedStyle(bed);
+        data.dimensions = {
+          width: bed.offsetWidth,
+          height: bed.offsetHeight
+        };
+        data.position = {
+          left: parseInt(computedStyle.left) || 0,
+          top: parseInt(computedStyle.top) || 0
+        };
+      }
+    });
+    
+    // Then save current state before editing (now includes current positions)
+    gardenDataBeforeEdit = JSON.stringify(gardenData);
+    
+    // Show resize handles
+    document.querySelectorAll('.resize-handle').forEach(handle => {
+      handle.style.display = 'block';
+    });
+    
+    showToast('✏️ Mod editare activat. Trage și redimensionează paturile.');
+  } else {
+    // Exit edit mode (cancel)
+    cancelEditMode();
+  }
+}
+
+function saveEditMode() {
+  editMode = false;
+  const editBtn = document.getElementById('edit-mode-btn');
+  const editControls = document.getElementById('edit-mode-controls');
+  const addPlantBtn = document.getElementById('add-plant-btn');
+  
+  editBtn.textContent = '✏️ Editează Grădina';
+  editBtn.style.background = '#FF9800';
+  editControls.style.display = 'none';
+  addPlantBtn.style.display = 'none';
+  
+  // Save to localStorage
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(gardenData));
+  gardenDataBeforeEdit = null;
+  plantsAddedDuringEdit = [];
+  
+  // Hide resize handles
+  document.querySelectorAll('.resize-handle').forEach(handle => {
+    handle.style.display = 'none';
+  });
+  
+  showToast('✅ Modificări salvate!');
+}
+
+function cancelEditMode() {
+  editMode = false;
+  const editBtn = document.getElementById('edit-mode-btn');
+  const editControls = document.getElementById('edit-mode-controls');
+  const addPlantBtn = document.getElementById('add-plant-btn');
+  
+  editBtn.textContent = '✏️ Editează Grădina';
+  editBtn.style.background = '#FF9800';
+  editControls.style.display = 'none';
+  addPlantBtn.style.display = 'none';
+  
+  // Restore previous state if we had one
+  if (gardenDataBeforeEdit) {
+    gardenData = JSON.parse(gardenDataBeforeEdit);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(gardenData));
+    
+    // Remove plants added during this edit session from DOM
+    plantsAddedDuringEdit.forEach(id => {
+      const bed = document.querySelector(`[data-id="${id}"]`);
+      if (bed) bed.remove();
+      
+      // Remove from PLANTS if it's a custom plant
+      if (id.startsWith('custom_')) {
+        delete PLANTS[id];
+        // Also remove from customPlants array
+        const index = customPlants.findIndex(cp => cp.id === id);
+        if (index > -1) {
+          customPlants.splice(index, 1);
+          localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(customPlants));
+        }
+      }
+    });
+    
+    // Restore DOM dimensions and positions directly
+    const beds = document.querySelectorAll('.bed');
+    beds.forEach(bed => {
+      const id = bed.dataset.id;
+      const data = gardenData[id];
+      if (data) {
+        if (data.position) {
+          bed.style.left = data.position.left + 'px';
+          bed.style.top = data.position.top + 'px';
+        }
+        if (data.dimensions) {
+          bed.style.width = data.dimensions.width + 'px';
+          bed.style.height = data.dimensions.height + 'px';
+        }
+        // Force browser to reflow and apply styles
+        void bed.offsetWidth;
+      }
+    });
+    
+    gardenDataBeforeEdit = null;
+  }
+  
+  plantsAddedDuringEdit = [];
+  
+  // Hide resize handles
+  document.querySelectorAll('.resize-handle').forEach(handle => {
+    handle.style.display = 'none';
+  });
+  
+  showToast('❌ Modificări anulate!');
 }
 
 // Display current date
@@ -1013,14 +2379,14 @@ function displayCurrentDate() {
   }
 }
 
-// Fetch and display current weather for Toplița, Harghita, Romania
+// Fetch and display current weather for Platonesti, Harghita, Romania
 async function fetchWeather() {
   const weatherElement = document.getElementById('current-weather');
   if (!weatherElement) return;
 
   try {
-    // Toplița coordinates: 46.35°N, 25.56°E
-    const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=46.35&longitude=25.56&current=temperature_2m,weather_code');
+    // Platonesti coordinates: 46.916794°N, 25.426088°E
+    const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=46.916794&longitude=25.426088&current=temperature_2m,weather_code');
     const data = await response.json();
 
     if (data.current) {
@@ -1073,6 +2439,7 @@ function getWeatherIcon(code) {
   return '🌤️'; // Default
 }
 
+loadCustomPlants();
 initBeds();
 displayCurrentDate();
 fetchWeather();
