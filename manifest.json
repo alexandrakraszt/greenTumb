@@ -2,7 +2,7 @@
   "name": "Green Thumb",
   "short_name": "Green Thumb",
   "description": "Garden planning and tracking app",
-  "start_url": "./index-v2.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#2D5016",
   "theme_color": "#2D5016",
