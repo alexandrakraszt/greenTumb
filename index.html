@@ -651,7 +651,7 @@
     <div class="header-weather" id="current-weather"></div>
     <div class="header-date" id="current-date"></div>
     <div style="display:flex;gap:8px;margin-top:4px;">
-      <button onclick="openDataManager()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;" title="Manage data">💾 Data</button>
+      <button onclick="openDataManager()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;" title="Manage data">💾 Administrare</button>
     </div>
   </div>
 </div>
@@ -813,6 +813,7 @@
         </div>
         <div class="modal-subtitle" id="modal-subtitle"></div>
       </div>
+      <button onclick="closeModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;padding:4px 8px;">✕</button>
     </div>
     
     <div id="emoji-picker" style="display:none;background:#fff;border:2px solid #e8e8e8;border-radius:12px;padding:12px;margin-bottom:16px;">
@@ -899,7 +900,6 @@
 
 
     <button class="btn-primary" onclick="saveModal()">✅ Salvează</button>
-    <button class="btn-secondary" onclick="closeModal()">Anulează</button>
     <button class="btn-secondary" onclick="deletePlant()" style="color:#C0392B;border-color:#C0392B;margin-top:4px;">🗑️ Șterge Plantă</button>
   </div>
 </div>
@@ -912,10 +912,11 @@
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-emoji">➕</div>
-      <div>
+      <div style="flex:1;">
         <div class="modal-title">Adaugă Plantă Nouă</div>
         <div class="modal-subtitle">Creează o plantă personalizată</div>
       </div>
+      <button onclick="closeCustomPlantModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;padding:4px 8px;">✕</button>
     </div>
 
     <div class="field-label">Nume plantă</div>
@@ -939,7 +940,6 @@
     <textarea id="custom-plant-obs" placeholder="Instrucțiuni de îngrijire..." style="min-height:60px;"></textarea>
 
     <button class="btn-primary" onclick="saveCustomPlant()">✅ Adaugă Plantă</button>
-    <button class="btn-secondary" onclick="closeCustomPlantModal()">Anulează</button>
   </div>
 </div>
 
@@ -949,10 +949,11 @@
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-emoji">💾</div>
-      <div>
-        <div class="modal-title">Gestionare Date</div>
+      <div style="flex:1;">
+        <div class="modal-title">Import / Export Grădină</div>
         <div class="modal-subtitle">Transferă datele grădinii între dispozitive</div>
       </div>
+      <button onclick="closeDataManager()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;padding:4px 8px;">✕</button>
     </div>
 
     <div style="background:#f0f8e8;border-radius:12px;padding:16px;margin-bottom:20px;border-left:4px solid var(--green-mid);">
@@ -967,16 +968,14 @@
     <div style="font-size:11px;color:#888;margin-bottom:8px;">Generează un link ce conține datele grădinii tale</div>
     <button class="btn-primary" onclick="generateShareLink()">Generează Link</button>
 
-    <div class="field-label" style="margin-top:20px;">📄 Exportă în Fișier</div>
-    <div style="font-size:11px;color:#888;margin-bottom:8px;">Descarcă datele tale ca fișier JSON</div>
-    <button class="btn-secondary" onclick="exportData()">Descarcă Fișier Backup</button>
+    <div class="field-label" style="margin-top:20px;">📄 Exportă Plan Grădină</div>
+    <div style="font-size:11px;color:#888;margin-bottom:8px;">Descarcă Plan Grădină ca fișier JSON</div>
+    <button class="btn-secondary" onclick="exportData()">Descarcă Plan Grădină</button>
 
-    <div class="field-label" style="margin-top:20px;">📂 Importă din Fișier</div>
-    <div style="font-size:11px;color:#888;margin-bottom:8px;">Încarcă date dintr-un fișier backup</div>
-    <button class="btn-secondary" onclick="document.getElementById('import-file').click()">Importă Fișier Backup</button>
+    <div class="field-label" style="margin-top:20px;">📂 Importă Plan Grădină</div>
+    <div style="font-size:11px;color:#888;margin-bottom:8px;">Încarcă date dintr-un fișier JSON cu Planul Grădinii</div>
+    <button class="btn-secondary" onclick="document.getElementById('import-file').click()">Importă Plan Grădină</button>
     <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)">
-
-    <button class="btn-secondary" onclick="closeDataManager()" style="margin-top:20px;">Închide</button>
   </div>
 </div>
 
@@ -986,17 +985,17 @@
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-emoji">🔗</div>
-      <div>
+      <div style="flex:1;">
         <div class="modal-title">Link de Partajare</div>
         <div class="modal-subtitle">Copiază și trimite acest link către alt dispozitiv</div>
       </div>
+      <button onclick="closeShareModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;padding:4px 8px;">✕</button>
     </div>
 
     <div class="field-label">Link de Partajare</div>
     <textarea id="share-link-text" readonly style="min-height:80px;font-size:12px;font-family:monospace;"></textarea>
 
     <button class="btn-primary" onclick="copyShareLink()">📋 Copiază Link</button>
-    <button class="btn-secondary" onclick="closeShareModal()">Închide</button>
   </div>
 </div>
 
@@ -1487,19 +1486,31 @@ function importData(event) {
 }
 
 function generateShareLink() {
-  const exportData = {
-    gardenData: gardenData,
-    customPlants: JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]'),
-    exportDate: new Date().toISOString()
-  };
+  try {
+    const exportData = {
+      gardenData: gardenData,
+      customPlants: JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]'),
+      exportDate: new Date().toISOString()
+    };
 
-  const encodedData = btoa(JSON.stringify(exportData));
-  const baseUrl = window.location.href.split('?')[0];
-  const shareLink = `${baseUrl}?data=${encodedData}`;
+    // Encode with UTF-8 support for Romanian characters
+    const encodedData = btoa(unescape(encodeURIComponent(JSON.stringify(exportData))));
+    const baseUrl = window.location.href.split('?')[0];
+    const shareLink = `${baseUrl}?data=${encodedData}`;
 
-  document.getElementById('share-link-text').value = shareLink;
-  document.getElementById('share-modal-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+    const shareLinkText = document.getElementById('share-link-text');
+    if (shareLinkText) {
+      shareLinkText.value = shareLink;
+      document.getElementById('share-modal-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    } else {
+      showToast('❌ Eroare: Elementul link nu a fost găsit!');
+      console.error('share-link-text element not found');
+    }
+  } catch (err) {
+    showToast('❌ Eroare la generarea link-ului!');
+    console.error(err);
+  }
 }
 
 function copyShareLink() {
@@ -1536,7 +1547,8 @@ function importFromUrl() {
 
   if (dataParam) {
     try {
-      const imported = JSON.parse(atob(dataParam));
+      // Decode with UTF-8 support for Romanian characters
+      const imported = JSON.parse(decodeURIComponent(escape(atob(dataParam))));
       if (imported.gardenData) {
         gardenData = imported.gardenData;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(gardenData));
