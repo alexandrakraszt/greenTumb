@@ -42,7 +42,7 @@
     margin: 0 auto;
   }
 
-  /* HEADER*/
+  /* HEADER */
   .header {
     background: linear-gradient(135deg, #2D5016 0%, #4A7C23 50%, #2D5016 100%);
     padding: 16px 20px 12px;
@@ -1045,6 +1045,7 @@ function saveModal() {
   const existing = getData(currentId);
   const history = existing.history || [];
   const harvest = existing.harvest || [];
+  const succession = existing.succession || [];
   
   const today = new Date().toLocaleDateString('ro-RO');
   if (noteText || status !== existing.status || nameInput !== existing.name || emojiInput !== existing.emoji) {
