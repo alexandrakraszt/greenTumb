@@ -14,12 +14,18 @@
 <meta name="apple-mobile-web-app-title" content="Green Thumb">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script>
-  // Cache-busting: force reload if file has changed
-  const CACHE_VERSION = '1.0.0';
-  const storedVersion = localStorage.getItem('app_version');
-  if (storedVersion !== CACHE_VERSION) {
-    localStorage.setItem('app_version', CACHE_VERSION);
-    location.reload(true);
+  // Cache-busting using timestamp - automatically forces reload daily
+  const today = new Date().toDateString();
+  const lastVisit = localStorage.getItem('last_visit_date');
+  if (lastVisit !== today) {
+    localStorage.setItem('last_visit_date', today);
+    // Force reload to get latest version
+    if (performance.getEntriesByType) {
+      const nav = performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'back_forward') {
+        location.reload(true);
+      }
+    }
   }
 </script>
 <style>
