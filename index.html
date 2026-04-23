@@ -679,7 +679,8 @@
     <div class="header-date" id="current-date"></div>
     <div id="sync-status" style="font-size:10px;color:var(--green-pale);margin-top:2px;font-weight:600;">⏳ Inițializare...</div>
     <div style="display:flex;gap:8px;margin-top:4px;">
-      <button onclick="openDataManager()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;" title="Manage data">💾 Administrare</button>
+      <button id="auth-btn" onclick="openAuthModal()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;">👤 Autentificare</button>
+      <button onclick="openDataManager()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;">⚙️ Administrare</button>
     </div>
   </div>
 </div>
@@ -833,11 +834,11 @@
   <div class="modal" id="modal">
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <div class="modal-emoji" id="modal-emoji" onclick="toggleEmojiPicker()" style="cursor:pointer;" title="Click to change emoji">🌱</div>
+      <div class="modal-emoji" id="modal-emoji" onclick="toggleEmojiPicker()" style="cursor:pointer;">🌱</div>
       <div style="flex:1;">
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="modal-title" id="modal-title">Plantă</div>
-          <span onclick="editModalTitle()" style="cursor:pointer;font-size:18px;color:#666;" title="Click to edit">✏️</span>
+          <span onclick="editModalTitle()" style="cursor:pointer;font-size:18px;color:#666;">✏️</span>
         </div>
         <div class="modal-subtitle" id="modal-subtitle"></div>
       </div>
@@ -1028,6 +1029,41 @@
   </div>
 </div>
 
+<!-- ===== LOGIN/SIGNUP MODAL ===== -->
+<div class="modal-overlay centered" id="auth-modal-overlay" onclick="if(event.target===this)closeAuthModal()">
+  <div class="modal" id="auth-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-emoji">👤</div>
+      <div style="flex:1;">
+        <div class="modal-title" id="auth-modal-title">Autentificare</div>
+        <div class="modal-subtitle" id="auth-modal-subtitle">Intră în contul tău pentru a sincroniza datele</div>
+      </div>
+      <button onclick="closeAuthModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;padding:4px 8px;">✕</button>
+    </div>
+
+    <div class="field-label">Email</div>
+    <input type="email" id="auth-email" placeholder="nume@exemplu.com" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;font-size:14px;">
+
+    <div class="field-label">Parolă</div>
+    <input type="password" id="auth-password" placeholder="••••••••" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;font-size:14px;">
+
+    <div id="auth-confirm-password-container" style="display:none;">
+      <div class="field-label">Confirmă Parola</div>
+      <input type="password" id="auth-confirm-password" placeholder="••••••••" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;font-size:14px;">
+    </div>
+
+    <button class="btn-primary" id="auth-submit-btn" onclick="handleAuthSubmit()" style="width:100%;">🔐 Autentificare</button>
+
+    <div style="text-align:center;margin-top:16px;font-size:12px;color:#666;">
+      <span id="auth-switch-text">Nu ai cont?</span>
+      <button onclick="toggleAuthMode()" style="background:none;border:none;color:var(--green-mid);cursor:pointer;font-weight:700;text-decoration:underline;">Înregistrează-te</button>
+    </div>
+
+    <div id="auth-error" style="color:#E74C3C;font-size:12px;margin-top:12px;display:none;"></div>
+  </div>
+</div>
+
 <script>
 // ============ DATA ============
 const PLANTS = {
@@ -1054,17 +1090,60 @@ let plantsAddedDuringEdit = [];
 // Firebase initialization
 async function initializeFirebase() {
   try {
-    // Sign in anonymously
-    const userCredential = await auth.signInAnonymously();
-    currentUser = userCredential.user;
-    console.log('Anonymous user signed in:', currentUser.uid);
-    dbInitialized = true;
-    updateSyncStatus('✓ Conectat la Firebase');
+    // Check for existing session
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        console.log('User signed in:', user.email, user.uid);
+        dbInitialized = true;
+        updateSyncStatus(`✓ Conectat ca: ${user.email}`);
+        
+        // Update auth button to show logout
+        const authBtn = document.getElementById('auth-btn');
+        if (authBtn) {
+          authBtn.textContent = '🚪 Deconectare';
+          authBtn.onclick = handleLogout;
+        }
+        
+        // Load data from Firestore for this user
+        gardenData = await loadFromFirestore();
+        initBeds();
+      } else {
+        // No user signed in - use anonymous auth as fallback
+        try {
+          const userCredential = await auth.signInAnonymously();
+          currentUser = userCredential.user;
+          console.log('Anonymous user signed in:', currentUser.uid);
+          dbInitialized = true;
+          updateSyncStatus('✓ Conectat la Firebase (Anonim)');
+          
+          // Update auth button to show login
+          const authBtn = document.getElementById('auth-btn');
+          if (authBtn) {
+            authBtn.textContent = '👤 Autentificare';
+            authBtn.onclick = openAuthModal;
+          }
+          
+          // Load data from Firestore for anonymous user
+          gardenData = await loadFromFirestore();
+          initBeds();
+        } catch (error) {
+          console.error('Firebase auth error:', error);
+          updateSyncStatus('❌ Eroare Firebase');
+          
+          // Update auth button to show login
+          const authBtn = document.getElementById('auth-btn');
+          if (authBtn) {
+            authBtn.textContent = '👤 Autentificare';
+            authBtn.onclick = openAuthModal;
+          }
+        }
+      }
+    });
     return currentUser;
   } catch (error) {
-    console.error('Firebase auth error:', error);
+    console.error('Firebase initialization error:', error);
     updateSyncStatus('❌ Eroare Firebase');
-    // Fall back to localStorage
     return null;
   }
 }
@@ -1148,6 +1227,142 @@ function updateSyncStatus(message) {
   const statusEl = document.getElementById('sync-status');
   if (statusEl) {
     statusEl.textContent = message;
+  }
+}
+
+// ============ AUTHENTICATION ============
+let isSignupMode = false;
+
+function openAuthModal() {
+  document.getElementById('auth-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  // Reset to login mode
+  isSignupMode = false;
+  updateAuthModalUI();
+}
+
+function closeAuthModal() {
+  document.getElementById('auth-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  // Clear error
+  document.getElementById('auth-error').style.display = 'none';
+  document.getElementById('auth-error').textContent = '';
+  // Clear inputs
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-password').value = '';
+  document.getElementById('auth-confirm-password').value = '';
+}
+
+function toggleAuthMode() {
+  isSignupMode = !isSignupMode;
+  updateAuthModalUI();
+}
+
+function updateAuthModalUI() {
+  const title = document.getElementById('auth-modal-title');
+  const subtitle = document.getElementById('auth-modal-subtitle');
+  const submitBtn = document.getElementById('auth-submit-btn');
+  const switchText = document.getElementById('auth-switch-text');
+  const confirmContainer = document.getElementById('auth-confirm-password-container');
+  const errorDiv = document.getElementById('auth-error');
+  
+  errorDiv.style.display = 'none';
+  errorDiv.textContent = '';
+
+  if (isSignupMode) {
+    title.textContent = 'Înregistrare';
+    subtitle.textContent = 'Creează un cont pentru a sincroniza datele';
+    submitBtn.textContent = '📝 Înregistrează-te';
+    switchText.textContent = 'Ai deja cont?';
+    confirmContainer.style.display = 'block';
+  } else {
+    title.textContent = 'Autentificare';
+    subtitle.textContent = 'Intră în contul tău pentru a sincroniza datele';
+    submitBtn.textContent = '🔐 Autentificare';
+    switchText.textContent = 'Nu ai cont?';
+    confirmContainer.style.display = 'none';
+  }
+}
+
+async function handleAuthSubmit() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const confirmPassword = document.getElementById('auth-confirm-password').value;
+  const errorDiv = document.getElementById('auth-error');
+
+  // Validation
+  if (!email || !password) {
+    errorDiv.textContent = 'Te rugăm să completezi toate câmpurile';
+    errorDiv.style.display = 'block';
+    return;
+  }
+
+  if (isSignupMode) {
+    if (password.length < 6) {
+      errorDiv.textContent = 'Parola trebuie să aibă cel puțin 6 caractere';
+      errorDiv.style.display = 'block';
+      return;
+    }
+    if (password !== confirmPassword) {
+      errorDiv.textContent = 'Parolele nu coincid';
+      errorDiv.style.display = 'block';
+      return;
+    }
+  }
+
+  try {
+    if (isSignupMode) {
+      // Sign up
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      currentUser = userCredential.user;
+      showToast('✅ Cont creat cu succes!');
+      closeAuthModal();
+      
+      // Save any existing local data to the new account
+      const localData = localStorage.getItem(STORAGE_KEY);
+      if (localData) {
+        const gardenDataLocal = JSON.parse(localData);
+        await saveData(gardenDataLocal);
+      }
+    } else {
+      // Log in
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      currentUser = userCredential.user;
+      showToast('✅ Autentificat cu succes!');
+      closeAuthModal();
+    }
+  } catch (error) {
+    console.error('Auth error:', error);
+    let errorMessage = 'Eroare la autentificare';
+    
+    if (error.code === 'auth/email-already-in-use') {
+      errorMessage = 'Acest email este deja folosit';
+    } else if (error.code === 'auth/invalid-email') {
+      errorMessage = 'Email invalid';
+    } else if (error.code === 'auth/weak-password') {
+      errorMessage = 'Parola prea slabă';
+    } else if (error.code === 'auth/user-not-found') {
+      errorMessage = 'Utilizatorul nu a fost găsit';
+    } else if (error.code === 'auth/wrong-password') {
+      errorMessage = 'Parolă incorectă';
+    }
+    
+    errorDiv.textContent = errorMessage;
+    errorDiv.style.display = 'block';
+  }
+}
+
+async function handleLogout() {
+  try {
+    await auth.signOut();
+    currentUser = null;
+    showToast('✅ Te-ai deconectat');
+    
+    // Reload to reinitialize as anonymous
+    location.reload();
+  } catch (error) {
+    console.error('Logout error:', error);
+    showToast('❌ Eroare la deconectare');
   }
 }
 
@@ -2781,10 +2996,10 @@ async function initializeApp() {
   // Import from URL FIRST, before loading anything else
   importFromUrl();
 
-  // Initialize Firebase
-  await initializeFirebase();
+  // Initialize Firebase (this handles auth state changes internally)
+  initializeFirebase();
 
-  // Load data from Firestore/localStorage
+  // Load data from localStorage first for instant load
   gardenData = await loadData();
 
   // Initialize the rest of the app
