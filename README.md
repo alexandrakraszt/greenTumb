@@ -1,126 +1,241 @@
-# Green Thumb 🌱
+# Green Thumb 🌱 Garden Management App
 
-A beautiful garden planning and tracking web application for managing your vegetable garden. Built as a Progressive Web App (PWA) that can be installed on Android devices.
+A web-based garden planning and tracking application with Firebase authentication and Firestore data persistence.
 
 ## Features
 
-### 🗺️ Garden Map (Plan Grădină)
-- Visual representation of your garden layout
-- Interactive plant beds with status indicators
-- Status tracking: Neplantat, Plantat, Încolțit, Recoltat, Planta Perena, Uscat
-- Color-coded status dots for quick reference
-- Click on any plant bed to view details and update status
+- 🌱 **Plant Bed Management**: Create, move, and resize plant beds in an interactive garden view
+- 📅 **Planting Calendar**: Track planting periods and harvest forecasts
+- 📊 **Progress Tracking**: Monitor plant status, watering needs, and harvest quantities
+- 🔐 **User Authentication**: Secure login/signup with Firebase Authentication
+- ☁️ **Data Synchronization**: Automatic sync with Firestore for cross-device access
+- 🎨 **Custom Plants**: Add custom plant types with emojis, types, and observations
+- 📱 **Responsive Design**: Mobile-friendly interface with bottom sheet modals
 
-### 📅 Calendar
-- Planting calendar with recommended planting periods
-- Track planting dates for each plant
-- Visual timeline of your garden activities
+## Architecture
 
-### 📊 Progress Tracking
-- Overview of garden progress
-- Statistics for each plant status
-- Detailed per-plant progress information
+### Data Flow
 
-### 🌡️ Weather & Watering Recommendations
-- Real-time weather for Toplița, Harghita, Romania
-- Temperature-based watering recommendations:
-  - ≤2°C: Nu uda (risc de îngheț)
-  - ≤10°C: Udare redusă
-  - ≤20°C: Udare normală
-  - ≤28°C: Udare zilnică
-  - >28°C: Udare de 2x pe zi
-- Frost warnings (≤2°C)
-- Extreme heat warnings (≥30°C)
+The application uses **Firestore as the single source of truth** with localStorage serving as a cache for offline functionality.
 
-### 📅 Current Date
-- Automatic display of current date in Romanian
-
-## Plants Included
-
-| Plant | Type | Planting Period |
-|-------|------|----------------|
-| Zmeură | strat pământ | Sf. Aprilie |
-- Mazăre: strat înalt, Martie – Mai
-- Dovleac: strat pământ, După 15 Mai
-- Roșii (Micro Seră): micro seră, 10–15 Mai
-- Ceapă: strat pământ, Martie – Mai
-- Spanac + Salată: strat înalt, Martie – Mai
-- Ridichi: strat înalt, Martie – Mai
-- Căpșuni: strat înalt, Perene
-- Cartofi: strat pământ, Martie – Apr
-
-## Installation as PWA
-
-### On Android (Chrome)
-1. Upload files to a web server (GitHub Pages, Netlify, or Vercel are free)
-2. Open the URL in Chrome
-3. Tap the menu (three dots)
-4. Select "Add to Home Screen" or "Install App"
-5. The app will be installed on your home screen
-
-### On Computer (Chrome)
-1. Open the app in Chrome
-2. Look for the install icon in the address bar
-3. Click to install
-
-## Files Required
-
-- `index.html` - Main application file
-- `manifest.json` - PWA manifest
-- `sw.js` - Service worker for offline functionality
-- `icon-192.png` - App icon (192x192) - *You need to create this*
-- `icon-512.png` - App icon (512x512) - *You need to create this*
-
-## Creating App Icons
-
-See `PWA_SETUP.md` for detailed instructions on creating app icons.
-
-## Local Development
-
-To test the app locally:
-
-```bash
-# Navigate to the project directory
-cd GreenTumb
-
-# Start a local server (Python)
-python -m http.server 8080
-
-# Or use Node.js
-npx http-server -p 8080
+```
+┌─────────────────┐
+│   User Action   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   gardenData    │ (In-memory state)
+└────────┬────────┘
+         │
+         ├─────────────────┬─────────────────┐
+         │                 │                 │
+         ▼                 ▼                 ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│   Firestore     │ │   localStorage   │ │     DOM         │
+│  (Primary)      │ │    (Cache)      │ │   (Display)     │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
 ```
 
-Then open http://localhost:8080 in your browser.
+### Key Data Structures
 
-## Offline Functionality
+**gardenData** - Main state object storing plant bed data:
+```javascript
+{
+  [plantId]: {
+    status: 'neplantat' | 'plantat' | 'incoltat' | 'recoltat' | 'perena' | 'problema',
+    date: 'YYYY-MM-DD',
+    note: 'User notes',
+    history: [{ date: 'DD/MM/YYYY', status: '...', note: '...' }],
+    dimensions: { width: 80, height: 75 },
+    position: { left: 10, top: 10 },
+    name: 'Plant name',
+    emoji: '🌱',
+    type: 'strat înalt' | 'strat pământ' | 'micro seră' | 'sol direct',
+    wateringDate: 'YYYY-MM-DD',
+    harvest: [{ date: 'YYYY-MM-DD', quantity: '2kg' }],
+    succession: [{ date: 'YYYY-MM-DD', interval: 14, completed: false }]
+  }
+}
+```
 
-The app includes a service worker that caches the main files, allowing it to work offline once installed. The service worker automatically caches:
-- index.html
-- manifest.json
+**PLANTS** - Plant definitions (predefined + custom):
+```javascript
+{
+  [plantId]: {
+    name: 'Plant name',
+    emoji: '🌱',
+    type: 'strat înalt',
+    period: 'Martie – Mai',
+    obs: 'Observations'
+  }
+}
+```
 
-## Data Persistence
+**customPlants** - User-defined plant types (stored in localStorage & Firestore):
+```javascript
+[
+  { id, name, emoji, type, period, obs }
+]
+```
 
-Plant data is stored in the browser's localStorage, so your progress is saved locally on your device.
+### Authentication Flow
 
-## Technology Stack
+```
+┌─────────────────┐
+│  Page Load      │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Firebase Auth   │
+│  State Change   │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │         │
+    ▼         ▼
+┌────────┐ ┌──────────┐
+│ Signed │ │ Unsigned │
+│   In   │ │   Out    │
+└───┬────┘ └────┬─────┘
+    │            │
+    ▼            ▼
+┌──────────────┐ ┌──────────────┐
+│ Load from    │ │ Show Login   │
+│ Firestore    │ │   Modal      │
+│ (Source of   │ │              │
+│  Truth)      │ │              │
+└──────┬───────┘ └──────────────┘
+       │
+       ▼
+┌──────────────┐
+│ Load Custom  │
+│   Plants     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│  initBeds()  │
+│  Render DOM  │
+└──────────────┘
+```
 
-- HTML5
-- CSS3 (with custom variables and gradients)
-- Vanilla JavaScript
-- Open-Meteo API for weather data
-- Service Worker for PWA functionality
+### Data Persistence
 
-## Language
+**On Plant Creation:**
+1. Generate unique ID
+2. Add to `customPlants` array
+3. Add to `PLANTS` object
+4. Initialize `gardenData[id]` with dimensions and position
+5. Call `saveData(gardenData)` → saves to localStorage & Firestore
+6. Create DOM element with 'small' class if dimensions ≤ 80x75
 
-The app is entirely in Romanian (RO), optimized for users in Romania.
+**On Login:**
+1. Load from Firestore (source of truth)
+2. Save to localStorage as cache
+3. Load custom plants from Firestore
+4. Call `loadCustomPlants()` to populate PLANTS object
+5. Call `initBeds()` to render all beds
 
-## Location
+**On Logout:**
+1. Sign out from Firebase
+2. Show logout modal
+3. Clear garden DOM
+4. Show login modal
 
-Weather data is specifically for Toplița, Harghita, Romania.
+**On Page Refresh:**
+1. Firebase Auth checks session
+2. If authenticated: load from Firestore
+3. If not authenticated: load from localStorage (fallback)
+
+## Storage Keys
+
+- `STORAGE_KEY = 'gradina_data_v1'` - Garden data in localStorage
+- `CUSTOM_PLANTS_KEY = 'custom_plants_v1'` - Custom plant definitions
+- `EMAIL_HISTORY_KEY = 'email_history_v1'` - Login email history (last 5 emails)
+
+## Firebase Collections
+
+**gardens** - User-specific garden data:
+```javascript
+{
+  [uid]: {
+    gardenData: { ... },
+    customPlants: [ ... ],
+    lastUpdated: Timestamp
+  }
+}
+```
+
+## Plant Bed Types
+
+- **Strat înalt** (Raised bed) - Default styling with warm colors
+- **Strat pământ** (Ground bed) - Earth-tone styling
+- **Micro seră** (Greenhouse) - Green styling with lighter text
+- **Sol direct** (Direct soil) - Alternative styling
+
+## Status Indicators
+
+- ⬜ **Neplantat** (Not planted) - Gray
+- 🌱 **Plantat** (Planted) - Green
+- 🌿 **Încolțit** (Sprouted) - Yellow
+- 🧺 **Recoltat** (Harvested) - Blue
+- 🌸 **Planta Perena** (Perennial) - Pink
+- ⚠️ **Uscat** (Dried/Problem) - Red
+
+## Edit Mode
+
+Edit mode allows users to:
+- Add new plant beds via "+ Planta" button
+- Drag plant beds to reposition
+- Resize plant beds using corner handle
+- Delete plant beds
+- Changes are saved immediately to Firestore
+
+## Responsive Design
+
+- Mobile-first approach
+- Bottom sheet modals for mobile
+- Touch-friendly drag and resize
+- Responsive garden view
+
+## Browser Compatibility
+
+- Modern browsers with ES6+ support
+- Firebase SDK (loaded from CDN)
+- LocalStorage support required
+
+## Setup
+
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Enable Authentication (Email/Password)
+3. Create Firestore database
+4. Replace Firebase config in the HTML file with your project credentials
+5. Deploy or open the HTML file in a browser
+
+## Recent Updates
+
+### Data Persistence Improvements
+- Fixed new plant beds not loading after logout/login
+- Firestore is now the single source of truth
+- Added loading overlay during Firestore operations
+- Removed complex merge logic for cleaner data flow
+
+### UX Enhancements
+- Added "Tip Strat" dropdown for editing bed type after creation
+- Implemented email history dropdown for faster login
+- Added autocomplete to login form inputs
+- Decreased emoji size in small plant beds (80x75 or smaller)
+
+### Bug Fixes
+- Fixed drag functionality for newly added plant beds
+- Fixed variable initialization order in saveCustomPlant
+- Fixed duplicate code in saveModal function
 
 ## License
 
-Personal use project.
+Proprietary - Internal use only
 
 ## Credits
 
