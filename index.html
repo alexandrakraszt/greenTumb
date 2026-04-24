@@ -310,6 +310,7 @@
   .bed[data-status="problema"]::after { background: var(--accent-red); box-shadow: 0 0 6px var(--accent-red); }
 
   .bed-emoji { font-size: 22px; line-height: 1; }
+  .bed.small .bed-emoji { font-size: 16px; }
   .bed-name {
     font-size: 10px;
     font-weight: 800;
@@ -811,6 +812,19 @@
   </div><!-- /garden-scroll-wrapper -->
 </div>
 
+<!-- ===== LOADING OVERLAY ===== -->
+<div id="loading-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.9);z-index:9999;align-items:center;justify-content:center;flex-direction:column;">
+  <div style="font-size:48px;animation:spin 1s linear infinite;">⏳</div>
+  <div style="margin-top:16px;font-size:16px;color:#666;">Se încarcă datele...</div>
+</div>
+
+<style>
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+</style>
+
 <!-- ===== CALENDAR ===== -->
 <div id="tab-calendar" class="panel">
   <div id="calendar-list"></div>
@@ -896,6 +910,14 @@
       <div class="status-btn" data-status="perena" onclick="selectStatus('perena')"><span class="s-icon">🌸</span>Planta Perena</div>
       <div class="status-btn" data-status="problema" onclick="selectStatus('problema')"><span class="s-icon">⚠️</span>Uscat</div>
     </div>
+
+    <div class="field-label">Tip Strat</div>
+    <select id="modal-type" style="width:100%;border:2px solid #e8e8e8;border-radius:10px;padding:10px 12px;font-family:'Nunito',sans-serif;font-size:16px;background:#fafafa;color:#2D2D2D;">
+      <option value="strat înalt">Strat înalt</option>
+      <option value="strat pământ">Strat pământ</option>
+      <option value="micro seră">Micro seră</option>
+      <option value="sol direct">Sol direct</option>
+    </select>
 
     <div class="field-label">Data plantării</div>
     <input type="date" id="modal-date">
@@ -1043,14 +1065,15 @@
     </div>
 
     <div class="field-label">Email</div>
-    <input type="email" id="auth-email" placeholder="nume@exemplu.com" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;font-size:14px;">
+    <input type="email" id="auth-email" list="email-history" placeholder="nume@exemplu.com" autocomplete="email" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;font-size:14px;">
+    <datalist id="email-history"></datalist>
 
     <div class="field-label">Parolă</div>
-    <input type="password" id="auth-password" placeholder="••••••••" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;font-size:14px;">
+    <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;font-size:14px;">
 
     <div id="auth-confirm-password-container" style="display:none;">
       <div class="field-label">Confirmă Parola</div>
-      <input type="password" id="auth-confirm-password" placeholder="••••••••" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;font-size:14px;">
+      <input type="password" id="auth-confirm-password" placeholder="••••••••" autocomplete="new-password" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;font-size:14px;">
     </div>
 
     <button class="btn-primary" id="auth-submit-btn" onclick="handleAuthSubmit()" style="width:100%;">🔐 Autentificare</button>
@@ -1061,6 +1084,29 @@
     </div>
 
     <div id="auth-error" style="color:#E74C3C;font-size:12px;margin-top:12px;display:none;"></div>
+  </div>
+</div>
+
+<!-- ===== LOGOUT MODAL ===== -->
+<div class="modal-overlay centered" id="logout-modal-overlay" onclick="if(event.target===this)closeLogoutModal()">
+  <div class="modal" id="logout-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-emoji">👋</div>
+      <div style="flex:1;">
+        <div class="modal-title">Te-ai deconectat</div>
+ 
+      </div>
+      <button onclick="closeLogoutModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;padding:4px 8px;">✕</button>
+    </div>
+
+    <div style="text-align:center;padding:20px 0;">
+      <p style="font-size:14px;color:#666;line-height:1.6;">
+        Ai fost deconectat cu succes. Datele tale sunt salvate în siguranță.
+      </p>
+    </div>
+
+    <button class="btn-primary" onclick="openAuthModal();closeLogoutModal();" style="width:100%;">🔐 Autentifică-te din nou</button>
   </div>
 </div>
 
@@ -1081,14 +1127,51 @@ const PLANTS = {
 
 const STORAGE_KEY = 'gradina_data_v1';
 const CUSTOM_PLANTS_KEY = 'custom_plants_v1';
+const MAX_HISTORY = 50;
+
+// Undo/redo history
+let historyStack = [];
+let redoStack = [];
 
 // Edit mode state
 let editMode = false;
 let gardenDataBeforeEdit = null;
 let plantsAddedDuringEdit = [];
 
+const EMAIL_HISTORY_KEY = 'email_history_v1';
+
+// Load email history from localStorage and populate datalist
+function loadEmailHistory() {
+  const emailHistory = JSON.parse(localStorage.getItem(EMAIL_HISTORY_KEY) || '[]');
+  const datalist = document.getElementById('email-history');
+  if (datalist) {
+    datalist.innerHTML = emailHistory.map(email => `<option value="${email}">`).join('');
+  }
+}
+
+// Save email to localStorage history
+function saveEmailToHistory(email) {
+  if (!email) return;
+  const emailHistory = JSON.parse(localStorage.getItem(EMAIL_HISTORY_KEY) || '[]');
+  // Remove if already exists to move it to the end
+  const index = emailHistory.indexOf(email);
+  if (index > -1) {
+    emailHistory.splice(index, 1);
+  }
+  emailHistory.push(email);
+  // Keep only last 5 emails
+  if (emailHistory.length > 5) {
+    emailHistory.shift();
+  }
+  localStorage.setItem(EMAIL_HISTORY_KEY, JSON.stringify(emailHistory));
+  loadEmailHistory();
+}
+
 // Firebase initialization
 async function initializeFirebase() {
+  // Load email history on page load
+  loadEmailHistory();
+  
   try {
     // Check for existing session
     auth.onAuthStateChanged(async (user) => {
@@ -1106,38 +1189,34 @@ async function initializeFirebase() {
         }
         
         // Load data from Firestore for this user
-        gardenData = await loadFromFirestore();
+        const result = await loadFromFirestore();
+        gardenData = result.gardenData;
+        loadCustomPlants();
         initBeds();
       } else {
-        // No user signed in - use anonymous auth as fallback
-        try {
-          const userCredential = await auth.signInAnonymously();
-          currentUser = userCredential.user;
-          console.log('Anonymous user signed in:', currentUser.uid);
-          dbInitialized = true;
-          updateSyncStatus('✓ Conectat la Firebase (Anonim)');
-          
-          // Update auth button to show login
-          const authBtn = document.getElementById('auth-btn');
-          if (authBtn) {
-            authBtn.textContent = '👤 Autentificare';
-            authBtn.onclick = openAuthModal;
-          }
-          
-          // Load data from Firestore for anonymous user
-          gardenData = await loadFromFirestore();
-          initBeds();
-        } catch (error) {
-          console.error('Firebase auth error:', error);
-          updateSyncStatus('❌ Eroare Firebase');
-          
-          // Update auth button to show login
-          const authBtn = document.getElementById('auth-btn');
-          if (authBtn) {
-            authBtn.textContent = '👤 Autentificare';
-            authBtn.onclick = openAuthModal;
-          }
+        // No user signed in - show login modal
+        console.log('No user signed in');
+        updateSyncStatus('⏳ Te rugăm să te autentifici');
+        
+        // Update auth button to show login
+        const authBtn = document.getElementById('auth-btn');
+        if (authBtn) {
+          authBtn.textContent = '👤 Autentificare';
+          authBtn.onclick = openAuthModal;
         }
+        
+        // Don't load or display garden data until authenticated
+        gardenData = {};
+        
+        // Clear any existing beds from DOM
+        const gardenInner = document.querySelector('.garden-inner');
+        if (gardenInner) {
+          const beds = gardenInner.querySelectorAll('.bed');
+          beds.forEach(bed => bed.remove());
+        }
+        
+        // Show login modal
+        openAuthModal();
       }
     });
     return currentUser;
@@ -1150,29 +1229,33 @@ async function initializeFirebase() {
 
 // Load data from Firestore (with localStorage fallback)
 async function loadData() {
-  // First try localStorage for instant load
+  // If user is authenticated, load from Firestore (source of truth)
+  if (currentUser) {
+    const result = await loadFromFirestore();
+    return result.gardenData;
+  }
+  
+  // If no user, try localStorage as fallback
   try {
     const localRaw = localStorage.getItem(STORAGE_KEY);
     if (localRaw) {
-      const localData = JSON.parse(localRaw);
-      // Then load from Firestore in background
-      if (currentUser) {
-        loadFromFirestore();
-      }
-      return localData;
+      return JSON.parse(localRaw);
     }
   } catch(e) {}
-
-  // If no localStorage data, try Firestore
-  if (currentUser) {
-    return await loadFromFirestore();
-  }
+  
   return {};
 }
 
 // Load from Firestore
 async function loadFromFirestore() {
-  if (!currentUser) return {};
+  if (!currentUser) return { gardenData: {}, customPlants: [] };
+  
+  // Show loading overlay
+  const loadingOverlay = document.getElementById('loading-overlay');
+  if (loadingOverlay) {
+    loadingOverlay.style.display = 'flex';
+  }
+  
   try {
     const doc = await db.collection('gardens').doc(currentUser.uid).get();
     if (doc.exists) {
@@ -1183,13 +1266,18 @@ async function loadFromFirestore() {
         localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(data.customPlants));
       }
       updateSyncStatus('✓ Date sincronizate');
-      return data.gardenData || {};
+      return { gardenData: data.gardenData || {}, customPlants: data.customPlants || [] };
     }
   } catch (error) {
     console.error('Error loading from Firestore:', error);
     updateSyncStatus('⚠️ Eroare sincronizare');
+  } finally {
+    // Hide loading overlay
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'none';
+    }
   }
-  return {};
+  return { gardenData: {}, customPlants: [] };
 }
 
 // Save data to Firestore (and localStorage as backup)
@@ -1315,6 +1403,7 @@ async function handleAuthSubmit() {
       // Sign up
       const userCredential = await auth.createUserWithEmailAndPassword(email, password);
       currentUser = userCredential.user;
+      saveEmailToHistory(email);
       showToast('✅ Cont creat cu succes!');
       closeAuthModal();
       
@@ -1328,8 +1417,15 @@ async function handleAuthSubmit() {
       // Log in
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
       currentUser = userCredential.user;
+      saveEmailToHistory(email);
       showToast('✅ Autentificat cu succes!');
       closeAuthModal();
+      
+      // Load data from Firestore (source of truth)
+      const firestoreResult = await loadFromFirestore();
+      gardenData = firestoreResult.gardenData;
+      initBeds();
+      console.log('Loaded data from Firestore');
     }
   } catch (error) {
     console.error('Auth error:', error);
@@ -1358,12 +1454,18 @@ async function handleLogout() {
     currentUser = null;
     showToast('✅ Te-ai deconectat');
     
-    // Reload to reinitialize as anonymous
-    location.reload();
+    // Show logout modal instead of reloading
+    document.getElementById('logout-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
   } catch (error) {
     console.error('Logout error:', error);
     showToast('❌ Eroare la deconectare');
   }
+}
+
+function closeLogoutModal() {
+  document.getElementById('logout-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 // ============ TABS ============
@@ -1394,6 +1496,7 @@ function openModal(id) {
   document.getElementById('modal-date').value = data.date || '';
   document.getElementById('modal-note').value = '';
   document.getElementById('modal-watering-date').value = data.wateringDate || '';
+  document.getElementById('modal-type').value = data.type || plant.type;
   
   // Reset harvest inputs
   document.getElementById('modal-harvest-date').value = '';
@@ -1474,6 +1577,7 @@ function saveModal() {
   const date = document.getElementById('modal-date').value;
   const noteText = document.getElementById('modal-note').value.trim();
   const wateringDate = document.getElementById('modal-watering-date').value;
+  const typeInput = document.getElementById('modal-type').value;
   
   // Get name from input if in edit mode, otherwise from display
   const titleInput = document.getElementById('modal-title-input');
@@ -1492,7 +1596,7 @@ function saveModal() {
     history.push({ date: today, status, note: noteText });
   }
 
-  gardenData[currentId] = { status, date, note: noteText, history, name: nameInput, emoji: emojiInput, wateringDate, harvest, succession };
+  gardenData[currentId] = { status, date, note: noteText, history, name: nameInput, emoji: emojiInput, wateringDate, harvest, succession, type: typeInput };
   saveData(gardenData);
 
   // Update bed dot
@@ -1510,7 +1614,20 @@ function saveModal() {
     const bedName = bed.querySelector('.bed-name');
     if (bedName) bedName.textContent = nameInput;
   }
-
+  
+  // Update bed class based on type
+  if (bed && typeInput) {
+    const bedClass = getBedClassFromPlantType(typeInput);
+    bed.className = `bed ${bedClass}`;
+    const typeBadge = bed.querySelector('.bed-type-badge');
+    if (typeBadge) typeBadge.textContent = typeInput;
+  }
+  
+  // Update PLANTS object
+  if (PLANTS[currentId]) {
+    PLANTS[currentId].type = typeInput;
+  }
+  
   closeModal();
   showToast('✅ Salvat cu succes!');
 }
@@ -1950,9 +2067,19 @@ function addCustomPlant() {
   // Only allow adding plants in edit mode
   if (!editMode) {
     showToast('⚠️ Activează modul "Editează Grădina" pentru a adăuga plante!');
+    console.warn('addCustomPlant called but editMode is false');
     return;
   }
-  document.getElementById('custom-plant-modal-overlay').classList.add('open');
+  
+  const modalOverlay = document.getElementById('custom-plant-modal-overlay');
+  if (!modalOverlay) {
+    console.error('custom-plant-modal-overlay not found');
+    showToast('❌ Eroare: Modalul nu a fost găsit!');
+    return;
+  }
+  
+  console.log('Opening custom plant modal');
+  modalOverlay.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
@@ -1984,26 +2111,8 @@ function getBedClassFromPlantType(plantType) {
   return typeMap[plantType] || 'raised';
 }
 
-function checkCollision(left, top, width, height) {
-  const beds = document.querySelectorAll('.bed');
-  for (let bed of beds) {
-    const bedLeft = parseInt(bed.style.left);
-    const bedTop = parseInt(bed.style.top);
-    const bedWidth = bed.offsetWidth;
-    const bedHeight = bed.offsetHeight;
-    
-    // Check if rectangles overlap
-    if (left < bedLeft + bedWidth &&
-        left + width > bedLeft &&
-        top < bedTop + bedHeight &&
-        top + height > bedTop) {
-      return true;
-    }
-  }
-  return false;
-}
-
 function saveCustomPlant() {
+  console.log('saveCustomPlant called');
   const id = generateUniqueId();
   const name = document.getElementById('custom-plant-name').value.trim();
   const emoji = document.getElementById('custom-plant-emoji').value.trim() || '🌱';
@@ -2011,14 +2120,17 @@ function saveCustomPlant() {
   const period = document.getElementById('custom-plant-period').value.trim();
   const obs = document.getElementById('custom-plant-obs').value.trim();
   
+  console.log('Plant data:', { id, name, emoji, type, period, obs });
+  
   if (!name) {
     showToast('⚠️ Numele este obligatoriu!');
     return;
   }
   
   if (PLANTS[id]) {
-    // Try again if collision occurs
-    return saveCustomPlant();
+    console.error('ID collision detected:', id);
+    showToast('❌ Eroare: Conflict de ID. Încearcă din nou.');
+    return;
   }
   
   // Save to history
@@ -2034,29 +2146,24 @@ function saveCustomPlant() {
   // Add to PLANTS
   PLANTS[id] = { name, emoji, type, period, obs };
   
-  // Initialize data for new plant
-  gardenData[id] = { status: 'neplantat', date: '', note: '', history: [] };
-  
-  // Track this plant as added during edit mode
-  if (editMode) {
-    plantsAddedDuringEdit.push(id);
-  } else {
-    // Save if not in edit mode
-    saveData(gardenData);
-  }
-  
   // Create bed in garden-inner
   const gardenInner = document.querySelector('.garden-inner');
+  if (!gardenInner) {
+    console.error('garden-inner element not found');
+    showToast('❌ Eroare: Grădina nu a fost găsită!');
+    return;
+  }
+  
   const bedClass = getBedClassFromPlantType(type);
   
   // Find a non-overlapping position (top-left corner default)
-  let left = 10, top = 10, width = 80, height = 75;
+  let left = 10, top = 10, width = 40, height = 38;
   let attempts = 0;
   while (checkCollision(left, top, width, height, null, 5) && attempts < 100) {
-    left += 90; // Move right
+    left += 45; // Move right
     if (left > 600) {
       left = 10;
-      top += 85; // Move down
+      top += 43; // Move down
     }
     if (top > 200) {
       left = 10;
@@ -2065,27 +2172,68 @@ function saveCustomPlant() {
     attempts++;
   }
   
-  const bed = document.createElement('div');
-  bed.className = `bed ${bedClass}`;
-  bed.dataset.id = id;
-  bed.onclick = () => openModal(id);
-  bed.style.cssText = `position:absolute;top:${top}px;left:${left}px;width:${width}px;height:${height}px;`;
-  bed.draggable = true;
-  bed.innerHTML = `
-    <div class="bed-emoji">${emoji}</div>
-    <div class="bed-name">${name}</div>
-    <div class="bed-type-badge">${type}</div>
-    <div class="resize-handle" style="position:absolute;bottom:0;right:0;width:15px;height:15px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:0 0 10px 0;" onmousedown="handleResizeStart(event)"></div>
-  `;
+  if (attempts >= 100) {
+    console.warn('Could not find non-overlapping position after 100 attempts');
+    showToast('⚠️ Spațiu limitat - planta poate fi suprapusă');
+  }
   
-  // Add drag functionality
-  bed.addEventListener('dragstart', handleDragStart);
-  bed.addEventListener('dragend', handleDragEnd);
+  // Initialize data for new plant with calculated dimensions and position
+  gardenData[id] = { 
+    status: 'neplantat', 
+    date: '', 
+    note: '', 
+    history: [],
+    dimensions: { width: width, height: height },
+    position: { left: left, top: top }
+  };
   
-  gardenInner.appendChild(bed);
+  // Track this plant as added during edit mode
+  if (editMode) {
+    plantsAddedDuringEdit.push(id);
+  }
   
-  closeCustomPlantModal();
-  showToast('✅ Plantă adăugată! Trage pentru poziționare.');
+  // Save to Firebase immediately
+  saveData(gardenData);
+  
+  try {
+    const bed = document.createElement('div');
+    bed.className = `bed ${bedClass}`;
+    bed.dataset.id = id;
+    bed.onclick = () => openModal(id);
+    bed.style.cssText = `position:absolute;top:${top}px;left:${left}px;width:${width}px;height:${height}px;`;
+    
+    // Add 'small' class if bed is 80x75 or smaller
+    if (width <= 80 && height <= 75) {
+      bed.classList.add('small');
+    }
+    
+    bed.draggable = true;
+    bed.innerHTML = `
+      <div class="bed-emoji" style="pointer-events:none;">${emoji}</div>
+      <div class="bed-name" style="pointer-events:none;">${name}</div>
+      <div class="bed-type-badge" style="pointer-events:none;">${type}</div>
+      <div class="resize-handle" style="position:absolute;bottom:0;right:0;width:15px;height:15px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:0 0 10px 0;pointer-events:auto;" onmousedown="handleResizeStart(event)"></div>
+    `;
+    
+    // Add drag functionality
+    bed.addEventListener('dragstart', handleDragStart);
+    bed.addEventListener('dragend', handleDragEnd);
+    
+    gardenInner.appendChild(bed);
+    console.log(`Plant bed added: ${name} at (${left}, ${top}) with size ${width}x${height}`);
+    
+    closeCustomPlantModal();
+    showToast('✅ Plantă adăugată! Trage pentru poziționare.');
+  } catch (error) {
+    console.error('Error creating plant bed:', error);
+    showToast('❌ Eroare la adăugarea plantei!');
+    
+    // Rollback data changes
+    delete gardenData[id];
+    customPlants.pop();
+    localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(customPlants));
+    delete PLANTS[id];
+  }
   
   // Refresh current view if on calendar or progress
   if (document.getElementById('tab-calendar').classList.contains('active')) {
@@ -2153,7 +2301,7 @@ function handleResizeEnd(e) {
   
   resizingBed.classList.remove('resizing');
   
-  // Save dimensions to gardenData (only in memory if in edit mode)
+  // Save dimensions to gardenData
   const bedId = resizingBed.dataset.id;
   if (bedId && gardenData[bedId]) {
     gardenData[bedId].dimensions = {
@@ -2161,10 +2309,15 @@ function handleResizeEnd(e) {
       height: resizingBed.offsetHeight
     };
     
-    // Only save to localStorage if NOT in edit mode
-    if (!editMode) {
-      saveData(gardenData);
+    // Update 'small' class based on new dimensions
+    if (resizingBed.offsetWidth <= 80 && resizingBed.offsetHeight <= 75) {
+      resizingBed.classList.add('small');
+    } else {
+      resizingBed.classList.remove('small');
     }
+    
+    // Save to Firebase immediately
+    saveData(gardenData);
   }
   
   document.removeEventListener('mousemove', handleResizeMove);
@@ -2175,22 +2328,37 @@ function handleResizeEnd(e) {
 
 function checkCollision(left, top, width, height, excludeBed = null, padding = 0) {
   const beds = document.querySelectorAll('.bed');
+  const gardenInner = document.querySelector('.garden-inner');
+  const gardenHeight = gardenInner ? gardenInner.offsetHeight : 280;
+  
   for (let bed of beds) {
     if (bed === excludeBed) continue;
     
-    const bedLeft = parseInt(bed.style.left);
-    const bedTop = parseInt(bed.style.top);
+    const bedLeft = parseInt(bed.style.left) || 0;
+    let bedTop = parseInt(bed.style.top);
+    
+    // If bed uses 'bottom' instead of 'top', calculate top position
+    if (isNaN(bedTop)) {
+      const bedBottom = parseInt(bed.style.bottom) || 0;
+      const bedHeight = bed.offsetHeight;
+      bedTop = gardenHeight - bedBottom - bedHeight;
+    }
+    
     const bedWidth = bed.offsetWidth;
     const bedHeight = bed.offsetHeight;
+    
+    console.log(`Checking collision with bed ${bed.dataset.id}: left=${bedLeft}, top=${bedTop}, width=${bedWidth}, height=${bedHeight}`);
     
     // Check if rectangles overlap (with padding buffer)
     if (left + padding < bedLeft + bedWidth - padding &&
         left + width - padding > bedLeft + padding &&
         top + padding < bedTop + bedHeight - padding &&
         top + height - padding > bedTop + padding) {
+      console.log('Collision detected!');
       return true;
     }
   }
+  console.log('No collision detected');
   return false;
 }
 
@@ -2242,15 +2410,13 @@ function handleDragEnd(e) {
   draggedBed.style.top = newTop + 'px';
   draggedBed.style.opacity = '1';
   
-  // Save position to gardenData (only in memory if in edit mode)
+  // Save position to gardenData
   const bedId = draggedBed.dataset.id;
   if (bedId && gardenData[bedId]) {
     gardenData[bedId].position = { left: newLeft, top: newTop };
     
-    // Only save to localStorage and history if NOT in edit mode
-    if (!editMode) {
-      saveData(gardenData);
-    }
+    // Save to Firebase immediately
+    saveData(gardenData);
   }
   
   draggedBed = null;
@@ -2695,6 +2861,12 @@ function initBeds() {
         const bedWidth = data.dimensions?.width || 80;
         const bedHeight = data.dimensions?.height || 75;
         bed.style.cssText = `position:absolute;top:${data.position.top}px;left:${data.position.left}px;width:${bedWidth}px;height:${bedHeight}px;`;
+        
+        // Add 'small' class if bed is 80x75 or smaller
+        if (bedWidth <= 80 && bedHeight <= 75) {
+          bed.classList.add('small');
+        }
+        
         bed.draggable = true;
         bed.innerHTML = `
           <div class="bed-emoji">${data.emoji || plant.emoji}</div>
@@ -2775,6 +2947,7 @@ function toggleEditMode() {
     editBtn.style.background = '#E67E22';
     editControls.style.display = 'flex';
     addPlantBtn.classList.remove('hidden');
+    console.log('Edit mode activated, add plant button shown');
     
     // Track plants added during this edit session
     plantsAddedDuringEdit = [];
@@ -2843,8 +3016,8 @@ function saveEditMode() {
   editControls.style.display = 'none';
   addPlantBtn.classList.add('hidden');
   
-  // Save to localStorage
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(gardenData));
+  // Save to both localStorage and Firebase
+  saveData(gardenData);
   gardenDataBeforeEdit = null;
   plantsAddedDuringEdit = [];
   
