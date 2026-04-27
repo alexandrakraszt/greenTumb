@@ -162,6 +162,7 @@
     white-space: nowrap;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-align: center;
   }
   .tab-btn.active {
     color: var(--accent-yellow);
@@ -322,6 +323,57 @@
   }
   .bed.sera .bed-name { color: #2D5016; text-shadow: none; }
   .bed.todo .bed-name { color: var(--accent-yellow); text-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
+  
+  /* Hover label for plant beds */
+  .bed .hover-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(101, 67, 33, 0.80);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    z-index: 10;
+  }
+  .bed:hover .hover-label {
+    opacity: 1;
+  }
+  /* Hide hover label when in edit mode */
+  .garden-inner.editing .bed:hover .hover-label {
+    opacity: 0 !important;
+  }
+  /* Adjust font size based on bed dimensions */
+  .bed[style*="width: 80px"][style*="height: 75px"] .hover-label,
+  .bed[style*="width:40px"][style*="height:38px"] .hover-label {
+    font-size: 7px;
+    padding: 3px 6px;
+  }
+  .bed.small .hover-label {
+    font-size: 8px;
+    padding: 4px 8px;
+  }
+  .bed[style*="width: 100px"] .hover-label,
+  .bed[style*="width: 120px"] .hover-label,
+  .bed[style*="width: 140px"] .hover-label {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+  /* For beds with width under 80px, allow label to wrap to 2 rows */
+  .bed.narrow .hover-label {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+    padding: 4px 6px;
+  }
+  
   .bed-type-badge {
     font-size: 8px;
     color: rgba(254,250,224,0.7);
@@ -669,6 +721,23 @@
   .edit-mode-btn.hidden {
     display: none;
   }
+  #edit-mode-btn {
+    display: none;
+  }
+  
+  /* Emoji picker styles */
+  .emoji-option {
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    text-align: center;
+  }
+  .emoji-option:hover {
+    background: #f0f0f0;
+    transform: scale(1.1);
+  }
 </style>
 </head>
 <body>
@@ -678,6 +747,7 @@
   <div class="header-info">
     <div class="header-weather" id="current-weather"></div>
     <div class="header-date" id="current-date"></div>
+    <div id="user-email" style="font-size:10px;color:var(--green-pale);margin-top:2px;font-weight:600;display:none;"></div>
     <div id="sync-status" style="font-size:10px;color:var(--green-pale);margin-top:2px;font-weight:600;">⏳ Inițializare...</div>
     <div style="display:flex;gap:8px;margin-top:4px;">
       <button id="auth-btn" onclick="openAuthModal()" style="background:rgba(255,255,255,0.2);border:none;color:#FEFAE0;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;">👤 Autentificare</button>
@@ -690,13 +760,14 @@
   <button class="tab-btn active" onclick="showTab('plan-gradina')" data-label="Plan Grădină">🗺️ <span>Plan Grădină</span></button>
   <button class="tab-btn" onclick="showTab('calendar')" data-label="Calendar de plantare">📅 <span>Calendar de plantare</span></button>
   <button class="tab-btn" onclick="showTab('progres')" data-label="Progresul Grădinii">📊 <span>Progresul Grădinii</span></button>
-  <button class="tab-btn" onclick="toggleEditMode()" id="edit-mode-btn" style="background:#FF9800;" data-label="Editează Grădina">✏️ <span>Editează Grădina</span></button>
+  <button class="tab-btn" onclick="toggleEditMode()" id="edit-mode-btn" style="background:#FF9800;" data-label="Editează Grădina">✏️ <span> Editează Grădina</span></button>
 </div>
 
 <!-- ===== PLAN GRADINA ===== -->
 <div id="tab-plan-gradina" class="panel active">
   <div id="edit-mode-controls" style="display:none;gap:8px;margin-bottom:12px;align-items:center;">
     <button onclick="addCustomPlant()" id="add-plant-btn" class="edit-mode-btn hidden" style="background:#3498DB;">➕ Plantă</button>
+    <button onclick="openDecorModal()" id="add-decor-btn" class="edit-mode-btn hidden" style="background:#FFC107;">➕ Decor</button>
     <button onclick="saveEditMode()" class="edit-mode-btn" style="background:#27AE60;">Salvează</button>
     <button onclick="cancelEditMode()" class="edit-mode-btn" style="background:#E74C3C;">Anulează</button>
   </div>
@@ -715,98 +786,6 @@
       </div>
     </div>
     <div class="garden-inner">
-
-      <!-- ZMEURĂ -->
-      <div class="bed ground" data-id="zmeura" onclick="openModal('zmeura')" style="position: absolute; top: 12px; left: 12px; width: 60px; height: 110px;">
-         <div class="bed-emoji">🧁</div>
-        <div class="bed-name">Zmeură</div>
-                <div class="bed-type-badge">strat pământ</div>
-
-      </div>
-
-      <!-- COPAC 1 -->
-      <div class="tree-spot" style="position: absolute; top: 65px; left: 115px;">
-        <span>🌳</span>
-
-      </div>
-
-      <!-- COPAC 2 -->
-      <div class="tree-spot" style="position: absolute; top: 50px; left: 160px;">
-        <span>🌳</span>
-
-      </div>
-
-      <!-- COPAC 3 -->
-      <div class="tree-spot" style="position: absolute; top: 1px; left: 500px;">
-        <span>🌳</span>
-  
-      </div>
-
-  
-
-      <!-- MAZĂRE -->
-      <div class="bed raised" data-id="mazare" onclick="openModal('mazare')" style="position: absolute; top: 10px; left: 265px; width: 180px; height: 75px;">
-        <div class="bed-emoji">🫛</div>
-        <div class="bed-name">Mazăre</div>
-        <div class="bed-type-badge">strat înalt</div>
-      </div>
-
-      <!-- SPANAC + SALATĂ -->
-      <div class="bed raised" data-id="spanac" onclick="openModal('spanac')" style="position: absolute; top: 90px; left: 250px; width: 80px; height: 140px;">
-        <div class="bed-emoji">🥬</div>
-        <div class="bed-name">Spanac + Salată</div>
-        <div class="bed-type-badge">strat înalt</div>
-      </div>
-
-      <!-- RIDICHI -->
-      <div class="bed raised" data-id="ridichi" onclick="openModal('ridichi')" style="position: absolute; top: 90px; left: 380px; width: 80px; height: 140px;">
-         <div class="bed-emoji">🍥</div>
-        <div class="bed-name">Ridichi</div>
-        <div class="bed-type-badge">strat înalt</div>
-      </div>
-
-      <!-- CĂPȘUNI top -->
-      <div class="bed raised" data-id="capsuni1" onclick="openModal('capsuni1')" style="position: absolute; top: 65px; left: 480px; width: 105px; height: 75px;">
-        <div class="bed-emoji">🍓</div>
-        <div class="bed-name">Căpșuni</div>
-        <div class="bed-type-badge">strat înalt</div>
-      </div>
-
-      <!-- CĂPȘUNI bottom -->
-      <div class="bed raised" data-id="capsuni2" onclick="openModal('capsuni2')" style="position: absolute; top: 155px; left: 480px; width: 105px; height: 75px;">
-        <div class="bed-emoji">🍓</div>
-        <div class="bed-name">Căpșuni #2</div>
-        <div class="bed-type-badge">strat înalt</div>
-      </div>
-
-      <!-- DOVLEAC -->
-      <div class="bed ground" data-id="dovleac" onclick="openModal('dovleac')" style="position: absolute; top: 8px; left: 620px; width: 85px; height: 75px;">
-        <div class="bed-emoji">🎃</div>
-        <div class="bed-name">Dovleac</div>
-        <div class="bed-type-badge">strat pământ</div>
-      </div>
-
-      <!-- CARTOFI -->
-      <div class="bed ground" data-id="cartofi" onclick="openModal('cartofi')" style="position: absolute; bottom: 20px; left: 620px; width: 85px; height: 165px;">
-        <div class="bed-emoji">🥔</div>
-        <div class="bed-name">Cartofi</div>
-        <div class="bed-type-badge">strat pământ</div>
-      </div>
-
-      <!-- MICRO SERĂ ROȘII -->
-      <div class="bed sera" data-id="rosii" onclick="openModal('rosii')" style="position: absolute; bottom: 20px; left: 14px; width: 85px;">
-        <div class="bed-emoji">🪴</div>
-        <div class="bed-name">Micro Seră Roșii</div>
-        <div class="bed-type-badge" style="color:rgba(45,80,22,0.7)">roșii în ghivece</div>
-      </div>
-
-      <!-- CEAPĂ -->
-      <div class="bed ground" data-id="ceapa" onclick="openModal('ceapa')" style="position: absolute; bottom: 20px; left: 110px; width: 120px; height: 80px;">
-        <div class="bed-emoji">🧅</div>
-        <div class="bed-name">Ceapă</div>
-        <div class="bed-type-badge">strat pământ</div>
-      </div>
-
     </div>
   </div>
   </div><!-- /garden-scroll-wrapper -->
@@ -861,42 +840,61 @@
     
     <div id="emoji-picker" style="display:none;background:#fff;border:2px solid #e8e8e8;border-radius:12px;padding:12px;margin-bottom:16px;">
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-height:200px;overflow-y:auto;">
-        <span onclick="selectEmoji('🌱')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌱</span>
-        <span onclick="selectEmoji('🌿')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌿</span>
-        <span onclick="selectEmoji('🌳')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌳</span>
-        <span onclick="selectEmoji('🌲')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌲</span>
-        <span onclick="selectEmoji('🍅')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍅</span>
-        <span onclick="selectEmoji('🥬')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥬</span>
-        <span onclick="selectEmoji('🥕')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥕</span>
-        <span onclick="selectEmoji('🧅')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🧅</span>
-        <span onclick="selectEmoji('🧄')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🧄</span>
-        <span onclick="selectEmoji('🥔')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥔</span>
-        <span onclick="selectEmoji('🍓')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍓</span>
-        <span onclick="selectEmoji('🍇')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍇</span>
-        <span onclick="selectEmoji('🫛')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🫛</span>
-        <span onclick="selectEmoji('🌽')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌽</span>
-        <span onclick="selectEmoji('🎃')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🎃</span>
-        <span onclick="selectEmoji('🍆')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍆</span>
-        <span onclick="selectEmoji('🫑')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🫑</span>
-        <span onclick="selectEmoji('🥒')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥒</span>
-        <span onclick="selectEmoji('🌶️')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌶️</span>
-        <span onclick="selectEmoji('🍋')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍋</span>
-        <span onclick="selectEmoji('🍊')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍊</span>
-        <span onclick="selectEmoji('🍎')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍎</span>
-        <span onclick="selectEmoji('🍑')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍑</span>
-        <span onclick="selectEmoji('🍒')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍒</span>
-        <span onclick="selectEmoji('🥝')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥝</span>
-        <span onclick="selectEmoji('🌻')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌻</span>
-        <span onclick="selectEmoji('🌸')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌸</span>
-        <span onclick="selectEmoji('🌷')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌷</span>
-        <span onclick="selectEmoji('🌹')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌹</span>
-        <span onclick="selectEmoji('🪴')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🪴</span>
-        <span onclick="selectEmoji('🧁')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🧁</span>
-        <span onclick="selectEmoji('🍥')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍥</span>
-        <span onclick="selectEmoji('🌾')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌾</span>
-        <span onclick="selectEmoji('🍄')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍄</span>
-        <span onclick="selectEmoji('🌰')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌰</span>
-        <span onclick="selectEmoji('🥜')" style="font-size:28px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥜</span>
+        <span onclick="selectEmoji('🌱')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌱</span>
+        <span onclick="selectEmoji('🌿')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌿</span>
+        <span onclick="selectEmoji('🌳')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌳</span>
+        <span onclick="selectEmoji('🌲')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌲</span>
+        <span onclick="selectEmoji('🍅')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍅</span>
+        <span onclick="selectEmoji('🥬')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥬</span>
+        <span onclick="selectEmoji('🥕')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥕</span>
+        <span onclick="selectEmoji('🧅')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🧅</span>
+        <span onclick="selectEmoji('🧄')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🧄</span>
+        <span onclick="selectEmoji('🥔')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥔</span>
+        <span onclick="selectEmoji('🍓')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍓</span>
+        <span onclick="selectEmoji('🍇')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍇</span>
+        <span onclick="selectEmoji('🫛')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🫛</span>
+        <span onclick="selectEmoji('🌽')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌽</span>
+        <span onclick="selectEmoji('🎃')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🎃</span>
+        <span onclick="selectEmoji('🍆')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍆</span>
+        <span onclick="selectEmoji('🫑')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🫑</span>
+        <span onclick="selectEmoji('🥒')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🥒</span>
+        <span onclick="selectEmoji('🌶️')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🌶️</span>
+        <span onclick="selectEmoji('🍋')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍋</span>
+        <span onclick="selectEmoji('🍊')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍊</span>
+        <span onclick="selectEmoji('🍎')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍎</span>
+        <span onclick="selectEmoji('🍏')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍏</span>
+        <span onclick="selectEmoji('🍐')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍐</span>
+        <span onclick="selectEmoji('🍌')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍌</span>
+        <span onclick="selectEmoji('🍉')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍉</span>
+        <span onclick="selectEmoji('🍈')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍈</span>
+        <span onclick="selectEmoji('🍒')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍒</span>
+        <span onclick="selectEmoji('🍑')" style="font-size:32px;cursor:pointer;text-align:center;padding:4px;border-radius:8px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">🍑</span>
+        <span onclick="selectEmoji('🥭')">🥭</span>
+        <span onclick="selectEmoji('🍍')">🍍</span>
+        <span onclick="selectEmoji('🥥')">🥥</span>
+        <span onclick="selectEmoji('🥝')">🥝</span>
+        <span onclick="selectEmoji('🥑')">🥑</span>
+        <span onclick="selectEmoji('🥦')">🥦</span>
+        <span onclick="selectEmoji('🥜')">🥜</span>
+        <span onclick="selectEmoji('🌰')">🌰</span>
+        <span onclick="selectEmoji('🍠')">🍠</span>
+        <span onclick="selectEmoji('🥗')">🥗</span>
+        <span onclick="selectEmoji('🌻')">🌻</span>
+        <span onclick="selectEmoji('🌼')">🌼</span>
+        <span onclick="selectEmoji('🌷')">🌷</span>
+        <span onclick="selectEmoji('🌹')">🌹</span>
+        <span onclick="selectEmoji('🥀')">🥀</span>
+        <span onclick="selectEmoji('🌺')">🌺</span>
+        <span onclick="selectEmoji('🌸')">🌸</span>
+        <span onclick="selectEmoji('🌵')">🌵</span>
+        <span onclick="selectEmoji('🌴')">🌴</span>
+        <span onclick="selectEmoji('🌾')">🌾</span>
+        <span onclick="selectEmoji('🍃')">🍃</span>
+        <span onclick="selectEmoji('🍁')">🍁</span>
+        <span onclick="selectEmoji('🍂')">🍂</span>
+        <span onclick="selectEmoji('☘️')">☘️</span>
+        <span onclick="selectEmoji('🍀')">🍀</span>
+        <span onclick="selectEmoji('🏵️')">🏵️</span>
       </div>
     </div>
     <input type="text" id="modal-title-input" placeholder="Numele plantei" style="display:none;" onblur="saveModalTitleInline()" onkeydown="if(event.key==='Enter'){event.preventDefault();saveModalTitleInline();}">
@@ -974,7 +972,7 @@
     <input type="text" id="custom-plant-name" placeholder="Numele plantei">
 
     <div class="field-label">Emoji</div>
-    <input type="text" id="custom-plant-emoji" placeholder="🌱" maxlength="2" style="text-align:center;font-size:24px;">
+    <input type="text" id="custom-plant-emoji" value="🌱" readonly style="text-align:center;font-size:24px;width:60px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;padding:8px;">
 
     <div class="field-label">Tip</div>
     <select id="custom-plant-type" style="width:100%;border:2px solid #e8e8e8;border-radius:10px;padding:10px 12px;font-family:'Nunito',sans-serif;font-size:16px;background:#fafafa;color:#2D2D2D;">
@@ -991,6 +989,177 @@
     <textarea id="custom-plant-obs" placeholder="Instrucțiuni de îngrijire..." style="min-height:60px;"></textarea>
 
     <button class="btn-primary" onclick="saveCustomPlant()">✅ Adaugă Plantă</button>
+  </div>
+</div>
+
+<!-- Emoji Picker (outside modal to avoid z-index issues) -->
+<div id="custom-emoji-picker" style="display:none;position:fixed;background:white;border:2px solid #ddd;border-radius:12px;padding:16px;z-index:30000;box-shadow:0 4px 20px rgba(0,0,0,0.2);max-height:300px;overflow-y:auto;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);">
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <button onclick="showEmojiCategory('fruit')" class="emoji-category-btn active" data-category="fruit" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;cursor:pointer;background:#FF9800;color:white;">Fructe</button>
+    <button onclick="showEmojiCategory('vegetable')" class="emoji-category-btn" data-category="vegetable" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;cursor:pointer;background:#f0f0f0;">Legume</button>
+    <button onclick="showEmojiCategory('nature')" class="emoji-category-btn" data-category="nature" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;cursor:pointer;background:#f0f0f0;">Natură</button>
+    <button onclick="showEmojiCategory('symbols')" class="emoji-category-btn" data-category="symbols" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;cursor:pointer;background:#f0f0f0;">Simboluri</button>
+  </div>
+  <div id="emoji-fruit" class="emoji-category" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;">
+    <span class="emoji-option" onclick="selectEmoji('🍎')">🍎</span>
+    <span class="emoji-option" onclick="selectEmoji('🍏')">🍏</span>
+    <span class="emoji-option" onclick="selectEmoji('🍐')">🍐</span>
+    <span class="emoji-option" onclick="selectEmoji('🍊')">🍊</span>
+    <span class="emoji-option" onclick="selectEmoji('🍋')">🍋</span>
+    <span class="emoji-option" onclick="selectEmoji('🍌')">🍌</span>
+    <span class="emoji-option" onclick="selectEmoji('🍉')">🍉</span>
+    <span class="emoji-option" onclick="selectEmoji('🍇')">🍇</span>
+    <span class="emoji-option" onclick="selectEmoji('🍓')">🍓</span>
+    <span class="emoji-option" onclick="selectEmoji('🍈')">🍈</span>
+    <span class="emoji-option" onclick="selectEmoji('🍒')">🍒</span>
+    <span class="emoji-option" onclick="selectEmoji('🍑')">🍑</span>
+    <span class="emoji-option" onclick="selectEmoji('🥭')">🥭</span>
+    <span class="emoji-option" onclick="selectEmoji('🍍')">🍍</span>
+    <span class="emoji-option" onclick="selectEmoji('🥥')">🥥</span>
+    <span class="emoji-option" onclick="selectEmoji('🥝')">🥝</span>
+    <span class="emoji-option" onclick="selectEmoji('🍅')">🍅</span>
+    <span class="emoji-option" onclick="selectEmoji('🍆')">🍆</span>
+    <span class="emoji-option" onclick="selectEmoji('🥑')">🥑</span>
+    <span class="emoji-option" onclick="selectEmoji('🍆')">🍆</span>
+    <span class="emoji-option" onclick="selectEmoji('🌶️')">🌶️</span>
+    <span class="emoji-option" onclick="selectEmoji('🌽')">🌽</span>
+    <span class="emoji-option" onclick="selectEmoji('🥕')">🥕</span>
+    <span class="emoji-option" onclick="selectEmoji('🥒')">🥒</span>
+    <span class="emoji-option" onclick="selectEmoji('🥬')">🥬</span>
+  </div>
+  <div id="emoji-vegetable" class="emoji-category" style="display:none;grid-template-columns:repeat(6,1fr);gap:8px;">
+    <span class="emoji-option" onclick="selectEmoji('🥔')">🥔</span>
+    <span class="emoji-option" onclick="selectEmoji('🥕')">🥕</span>
+    <span class="emoji-option" onclick="selectEmoji('🥒')">🥒</span>
+    <span class="emoji-option" onclick="selectEmoji('🥬')">🥬</span>
+    <span class="emoji-option" onclick="selectEmoji('🥦')">🥦</span>
+    <span class="emoji-option" onclick="selectEmoji('🧄')">🧄</span>
+    <span class="emoji-option" onclick="selectEmoji('🧅')">🧅</span>
+    <span class="emoji-option" onclick="selectEmoji('🌶️')">🌶️</span>
+    <span class="emoji-option" onclick="selectEmoji('🌽')">🌽</span>
+    <span class="emoji-option" onclick="selectEmoji('🥜')">🥜</span>
+    <span class="emoji-option" onclick="selectEmoji('🌰')">🌰</span>
+    <span class="emoji-option" onclick="selectEmoji('🥚')">🥚</span>
+    <span class="emoji-option" onclick="selectEmoji('🧀')">🧀</span>
+    <span class="emoji-option" onclick="selectEmoji('🥗')">🥗</span>
+    <span class="emoji-option" onclick="selectEmoji('🥒')">🥒</span>
+    <span class="emoji-option" onclick="selectEmoji('🍠')">🍠</span>
+    <span class="emoji-option" onclick="selectEmoji('🥦')">🥦</span>
+    <span class="emoji-option" onclick="selectEmoji('🧅')">🧅</span>
+    <span class="emoji-option" onclick="selectEmoji('🧄')">🧄</span>
+    <span class="emoji-option" onclick="selectEmoji('🥬')">🥬</span>
+    <span class="emoji-option" onclick="selectEmoji('🌽')">🌽</span>
+    <span class="emoji-option" onclick="selectEmoji('🍆')">🍆</span>
+    <span class="emoji-option" onclick="selectEmoji('🍅')">🍅</span>
+  </div>
+  <div id="emoji-nature" class="emoji-category" style="display:none;grid-template-columns:repeat(6,1fr);gap:8px;">
+    <span class="emoji-option" onclick="selectEmoji('🌳')">🌳</span>
+    <span class="emoji-option" onclick="selectEmoji('🌲')">🌲</span>
+    <span class="emoji-option" onclick="selectEmoji('🌴')">🌴</span>
+    <span class="emoji-option" onclick="selectEmoji('🌵')">🌵</span>
+    <span class="emoji-option" onclick="selectEmoji('🌾')">🌾</span>
+    <span class="emoji-option" onclick="selectEmoji('🌿')">🌿</span>
+    <span class="emoji-option" onclick="selectEmoji('☘️')">☘️</span>
+    <span class="emoji-option" onclick="selectEmoji('🍀')">🍀</span>
+    <span class="emoji-option" onclick="selectEmoji('🍁')">🍁</span>
+    <span class="emoji-option" onclick="selectEmoji('🍂')">🍂</span>
+    <span class="emoji-option" onclick="selectEmoji('🍃')">🍃</span>
+    <span class="emoji-option" onclick="selectEmoji('🌱')">🌱</span>
+    <span class="emoji-option" onclick="selectEmoji('🌻')">🌻</span>
+    <span class="emoji-option" onclick="selectEmoji('🌼')">🌼</span>
+    <span class="emoji-option" onclick="selectEmoji('🌷')">🌷</span>
+    <span class="emoji-option" onclick="selectEmoji('🌹')">🌹</span>
+    <span class="emoji-option" onclick="selectEmoji('🥀')">🥀</span>
+    <span class="emoji-option" onclick="selectEmoji('🌺')">🌺</span>
+    <span class="emoji-option" onclick="selectEmoji('🌸')">🌸</span>
+    <span class="emoji-option" onclick="selectEmoji('🏵️')">🏵️</span>
+    <span class="emoji-option" onclick="selectEmoji('🌾')">🌾</span>
+    <span class="emoji-option" onclick="selectEmoji('🌿')">🌿</span>
+    <span class="emoji-option" onclick="selectEmoji('🍃')">🍃</span>
+    <span class="emoji-option" onclick="selectEmoji('🌲')">🌲</span>
+    <span class="emoji-option" onclick="selectEmoji('🌳')">🌳</span>
+    <span class="emoji-option" onclick="selectEmoji('🌴')">🌴</span>
+    <span class="emoji-option" onclick="selectEmoji('🌵')">🌵</span>
+    <span class="emoji-option" onclick="selectEmoji('🌾')">🌾</span>
+    <span class="emoji-option" onclick="selectEmoji('🌾')">🌾</span>
+    <span class="emoji-option" onclick="selectEmoji('🌿')">🌿</span>
+    <span class="emoji-option" onclick="selectEmoji('☘️')">☘️</span>
+    <span class="emoji-option" onclick="selectEmoji('🍀')">🍀</span>
+    <span class="emoji-option" onclick="selectEmoji('🌸')">🌸</span>
+    <span class="emoji-option" onclick="selectEmoji('🌷')">🌷</span>
+    <span class="emoji-option" onclick="selectEmoji('🌹')">🌹</span>
+  </div>
+  <div id="emoji-symbols" class="emoji-category" style="display:none;grid-template-columns:repeat(6,1fr);gap:8px;">
+    <span class="emoji-option" onclick="selectEmoji('✨')">✨</span>
+    <span class="emoji-option" onclick="selectEmoji('⭐')">⭐</span>
+    <span class="emoji-option" onclick="selectEmoji('🌟')">🌟</span>
+    <span class="emoji-option" onclick="selectEmoji('💫')">💫</span>
+    <span class="emoji-option" onclick="selectEmoji('⚡')">⚡</span>
+    <span class="emoji-option" onclick="selectEmoji('☀️')">☀️</span>
+    <span class="emoji-option" onclick="selectEmoji('🌤️')">🌤️</span>
+    <span class="emoji-option" onclick="selectEmoji('⛅')">⛅</span>
+    <span class="emoji-option" onclick="selectEmoji('🌥️')">🌥️</span>
+    <span class="emoji-option" onclick="selectEmoji('☁️')">☁️</span>
+    <span class="emoji-option" onclick="selectEmoji('🌧️')">🌧️</span>
+    <span class="emoji-option" onclick="selectEmoji('🌨️')">🌨️</span>
+    <span class="emoji-option" onclick="selectEmoji('🌩️')">🌩️</span>
+    <span class="emoji-option" onclick="selectEmoji('🌪️')">🌪️</span>
+    <span class="emoji-option" onclick="selectEmoji('🌫️')">🌫️</span>
+    <span class="emoji-option" onclick="selectEmoji('🌈')">🌈</span>
+    <span class="emoji-option" onclick="selectEmoji('🌂')">🌂</span>
+    <span class="emoji-option" onclick="selectEmoji('☔')">☔</span>
+    <span class="emoji-option" onclick="selectEmoji('⛈️')">⛈️</span>
+    <span class="emoji-option" onclick="selectEmoji('❄️')">❄️</span>
+    <span class="emoji-option" onclick="selectEmoji('☃️')">☃️</span>
+    <span class="emoji-option" onclick="selectEmoji('⛄')">⛄</span>
+    <span class="emoji-option" onclick="selectEmoji('💧')">💧</span>
+    <span class="emoji-option" onclick="selectEmoji('💦')">💦</span>
+    <span class="emoji-option" onclick="selectEmoji('🌊')">🌊</span>
+    <span class="emoji-option" onclick="selectEmoji('🌱')">🌱</span>
+    <span class="emoji-option" onclick="selectEmoji('🌲')">🌲</span>
+    <span class="emoji-option" onclick="selectEmoji('🌳')">🌳</span>
+    <span class="emoji-option" onclick="selectEmoji('🌴')">🌴</span>
+    <span class="emoji-option" onclick="selectEmoji('🌵')">🌵</span>
+    <span class="emoji-option" onclick="selectEmoji('🌾')">🌾</span>
+    <span class="emoji-option" onclick="selectEmoji('🌿')">🌿</span>
+    <span class="emoji-option" onclick="selectEmoji('☘️')">☘️</span>
+    <span class="emoji-option" onclick="selectEmoji('🍀')">🍀</span>
+    <span class="emoji-option" onclick="selectEmoji('🍁')">🍁</span>
+    <span class="emoji-option" onclick="selectEmoji('🍂')">🍂</span>
+    <span class="emoji-option" onclick="selectEmoji('🍃')">🍃</span>
+    <span class="emoji-option" onclick="selectEmoji('🌸')">🌸</span>
+    <span class="emoji-option" onclick="selectEmoji('🌷')">🌷</span>
+    <span class="emoji-option" onclick="selectEmoji('🌹')">🌹</span>
+    <span class="emoji-option" onclick="selectEmoji('🥀')">🥀</span>
+    <span class="emoji-option" onclick="selectEmoji('🌺')">🌺</span>
+    <span class="emoji-option" onclick="selectEmoji('🌻')">🌻</span>
+    <span class="emoji-option" onclick="selectEmoji('🌼')">🌼</span>
+    <span class="emoji-option" onclick="selectEmoji('🌾')">🌾</span>
+    <span class="emoji-option" onclick="selectEmoji('🌾')">🌾</span>
+    <span class="emoji-option" onclick="selectEmoji('🌿')">🌿</span>
+    <span class="emoji-option" onclick="selectEmoji('☘️')">☘️</span>
+    <span class="emoji-option" onclick="selectEmoji('🍀')">🍀</span>
+    <span class="emoji-option" onclick="selectEmoji('🍃')">🍃</span>
+    <span class="emoji-option" onclick="selectEmoji('🍂')">🍂</span>
+    <span class="emoji-option" onclick="selectEmoji('🍁')">🍁</span>
+    <span class="emoji-option" onclick="selectEmoji('🌲')">🌲</span>
+    <span class="emoji-option" onclick="selectEmoji('🌳')">🌳</span>
+    <span class="emoji-option" onclick="selectEmoji('🌴')">🌴</span>
+    <span class="emoji-option" onclick="selectEmoji('🌵')">🌵</span>
+    <span class="emoji-option" onclick="selectEmoji('🌾')">🌾</span>
+    <span class="emoji-option" onclick="selectEmoji('🌿')">🌿</span>
+    <span class="emoji-option" onclick="selectEmoji('☘️')">☘️</span>
+    <span class="emoji-option" onclick="selectEmoji('🍀')">🍀</span>
+    <span class="emoji-option" onclick="selectEmoji('⛲')">⛲</span>
+    <span class="emoji-option" onclick="selectEmoji('🌊')">🌊</span>
+    <span class="emoji-option" onclick="selectEmoji('🌅')">🌅</span>
+    <span class="emoji-option" onclick="selectEmoji('🌄')">🌄</span>
+    <span class="emoji-option" onclick="selectEmoji('🏔️')">🏔️</span>
+    <span class="emoji-option" onclick="selectEmoji('⛰️')">⛰️</span>
+    <span class="emoji-option" onclick="selectEmoji('🏞️')">🏞️</span>
+    <span class="emoji-option" onclick="selectEmoji('🌾')">🌾</span>
+    <span class="emoji-option" onclick="selectEmoji('🌻')">🌻</span>
+    <span class="emoji-option" onclick="selectEmoji('🌼')">🌼</span>
   </div>
 </div>
 
@@ -1052,7 +1221,7 @@
 </div>
 
 <!-- ===== LOGIN/SIGNUP MODAL ===== -->
-<div class="modal-overlay centered" id="auth-modal-overlay" onclick="if(event.target===this)closeAuthModal()">
+<div class="modal-overlay centered" id="auth-modal-overlay" onclick="if(event.target===this && !isSignupMode)closeAuthModal()">
   <div class="modal" id="auth-modal">
     <div class="modal-handle"></div>
     <div class="modal-header">
@@ -1110,6 +1279,36 @@
   </div>
 </div>
 
+<!-- ===== DECOR MODAL ===== -->
+<div class="modal-overlay centered" id="decor-modal-overlay">
+  <div class="modal" id="decor-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-emoji">➕</div>
+      <div style="flex:1;">
+        <div class="modal-title">Adaugă Decor</div>
+        <div class="modal-subtitle">Alege un element decorativ pentru grădina ta</div>
+      </div>
+      <button onclick="closeDecorModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;padding:4px 8px;">✕</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:20px 0;">
+      <div onclick="addDecor('tree')" style="text-align:center;cursor:pointer;padding:16px;background:#f5f5f5;border-radius:12px;transition:all 0.2s;border:2px solid #e0e0e0;" onmouseover="this.style.borderColor='#9B59B6'" onmouseout="this.style.borderColor='#e0e0e0'">
+        <div style="font-size:40px;margin-bottom:8px;">🌳</div>
+        <div style="font-weight:700;font-size:14px;color:#2D2D2D;">Copac</div>
+      </div>
+      <div onclick="addDecor('bush')" style="text-align:center;cursor:pointer;padding:16px;background:#f5f5f5;border-radius:12px;transition:all 0.2s;border:2px solid #e0e0e0;" onmouseover="this.style.borderColor='#9B59B6'" onmouseout="this.style.borderColor='#e0e0e0'">
+        <div style="font-size:40px;margin-bottom:8px;">🟩</div>
+        <div style="font-weight:700;font-size:14px;color:#2D2D2D;">Tufis</div>
+      </div>
+      <div onclick="addDecor('pond')" style="text-align:center;cursor:pointer;padding:16px;background:#f5f5f5;border-radius:12px;transition:all 0.2s;border:2px solid #e0e0e0;" onmouseover="this.style.borderColor='#9B59B6'" onmouseout="this.style.borderColor='#e0e0e0'">
+        <div style="font-size:40px;margin-bottom:8px;">⛲</div>
+        <div style="font-weight:700;font-size:14px;color:#2D2D2D;">Fântână</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============ DATA ============
 const PLANTS = {
@@ -1127,6 +1326,7 @@ const PLANTS = {
 
 const STORAGE_KEY = 'gradina_data_v1';
 const CUSTOM_PLANTS_KEY = 'custom_plants_v1';
+const DECOR_ITEMS_KEY = 'decor_items_v1';
 const MAX_HISTORY = 50;
 
 // Undo/redo history
@@ -1137,8 +1337,13 @@ let redoStack = [];
 let editMode = false;
 let gardenDataBeforeEdit = null;
 let plantsAddedDuringEdit = [];
+let decorItemsBeforeEdit = null;
+
+// Decor state
+let decorItems = [];
 
 const EMAIL_HISTORY_KEY = 'email_history_v1';
+let isNewUser = false;
 
 // Load email history from localStorage and populate datalist
 function loadEmailHistory() {
@@ -1167,7 +1372,354 @@ function saveEmailToHistory(email) {
   loadEmailHistory();
 }
 
-// Firebase initialization
+// Update edit button text based on user state
+function updateEditButtonForNewUser() {
+  const editBtn = document.getElementById('edit-mode-btn');
+  if (editBtn) {
+    editBtn.innerHTML = '✏️ <span>Creează Grădina</span>';
+    editBtn.setAttribute('data-label', 'Creează Grădina');
+    editBtn.style.display = 'flex';
+    console.log('updateEditButtonForNewUser called, button updated');
+  } else {
+    console.log('updateEditButtonForNewUser: edit button not found');
+  }
+}
+
+function updateEditButtonForExistingUser() {
+  const editBtn = document.getElementById('edit-mode-btn');
+  if (editBtn) {
+    editBtn.innerHTML = '✏️ <span>Editează Grădina</span>';
+    editBtn.setAttribute('data-label', 'Editează Grădina');
+    editBtn.style.display = 'flex';
+    console.log('updateEditButtonForExistingUser called, button updated');
+  } else {
+    console.log('updateEditButtonForExistingUser: edit button not found');
+  }
+}
+
+// Decor modal functions
+function openDecorModal() {
+  document.getElementById('decor-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDecorModal() {
+  document.getElementById('decor-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Emoji picker functions
+function openEmojiPicker() {
+  const picker = document.getElementById('custom-emoji-picker');
+  if (picker) {
+    picker.style.display = 'block';
+    console.log('Emoji picker opened');
+  } else {
+    console.error('Emoji picker element not found');
+  }
+}
+
+function showEmojiCategory(category) {
+  // Hide all categories
+  document.querySelectorAll('.emoji-category').forEach(el => el.style.display = 'none');
+  
+  // Show selected category
+  document.getElementById('emoji-' + category).style.display = 'grid';
+  
+  // Update button styles
+  document.querySelectorAll('.emoji-category-btn').forEach(btn => {
+    btn.style.background = '#f0f0f0';
+    btn.style.color = '#2D2D2D';
+  });
+  
+  const activeBtn = document.querySelector(`.emoji-category-btn[data-category="${category}"]`);
+  if (activeBtn) {
+    activeBtn.style.background = '#FF9800';
+    activeBtn.style.color = 'white';
+  }
+}
+
+function selectEmoji(emoji) {
+  // Check if custom plant modal is open
+  const customModal = document.getElementById('custom-plant-modal-overlay');
+  if (customModal && customModal.classList.contains('open')) {
+    // Set emoji in custom plant modal
+    const customEmojiInput = document.getElementById('custom-plant-emoji');
+    if (customEmojiInput) {
+      customEmojiInput.value = emoji;
+    }
+    document.getElementById('custom-emoji-picker').style.display = 'none';
+  } else {
+    // Set emoji in main plant modal
+    const modalEmoji = document.getElementById('modal-emoji');
+    if (modalEmoji) {
+      modalEmoji.textContent = emoji;
+    }
+    document.getElementById('emoji-picker').style.display = 'none';
+  }
+}
+
+// Close emoji picker when clicking outside
+document.addEventListener('click', function(e) {
+  // Handle main plant modal emoji picker
+  const picker = document.getElementById('emoji-picker');
+  const pickerBtn = e.target.closest('#modal-emoji');
+  if (picker && picker.style.display === 'block' && !picker.contains(e.target) && !pickerBtn) {
+    picker.style.display = 'none';
+  }
+  
+  // Handle custom plant modal emoji picker
+  const customPicker = document.getElementById('custom-emoji-picker');
+  const customPickerBtn = e.target.closest('button[onclick="openEmojiPicker()"]');
+  if (customPicker && customPicker.style.display === 'block' && !customPicker.contains(e.target) && !customPickerBtn) {
+    customPicker.style.display = 'none';
+  }
+});
+
+function addDecor(type) {
+  closeDecorModal();
+  
+  const gardenInner = document.querySelector('.garden-inner');
+  if (!gardenInner) return;
+  
+  const decorConfig = {
+    tree: { emoji: '🌳', name: 'Copac' },
+    bush: { emoji: '🟩', name: 'Tufis' },
+    pond: { emoji: '⛲', name: 'Fântână' }
+  };
+  
+  const config = decorConfig[type];
+  const id = 'decor_' + Date.now();
+  
+  // Find open position
+  let left = 10, top = 10;
+  const existingItems = document.querySelectorAll('.decor-item');
+  existingItems.forEach(item => {
+    const itemLeft = parseInt(item.style.left);
+    const itemTop = parseInt(item.style.top);
+    if (itemLeft >= left) left = itemLeft + 60;
+    if (itemTop >= top) top = itemTop + 60;
+  });
+  
+  // Create decor element
+  const decor = document.createElement('div');
+  decor.className = 'decor-item';
+  decor.dataset.id = id;
+  decor.dataset.type = type;
+  decor.style.cssText = `position:absolute;top:${top}px;left:${left}px;font-size:45px;cursor:move;z-index:100;`;
+  decor.innerHTML = config.emoji;
+  decor.draggable = true;
+  
+  // Add drag functionality
+  decor.addEventListener('dragstart', handleDecorDragStart);
+  decor.addEventListener('dragend', handleDecorDragEnd);
+  
+  gardenInner.appendChild(decor);
+  
+  // Add to decorItems array
+  decorItems.push({
+    id: id,
+    type: type,
+    emoji: config.emoji,
+    name: config.name,
+    position: { left: left, top: top }
+  });
+  
+  // Save to Firestore immediately
+  saveDecorData();
+  
+  showToast(`✅ ${config.name} adăugat!`);
+}
+
+// Decor drag functionality
+let draggedDecor = null;
+let decorDragOffsetX = 0;
+let decorDragOffsetY = 0;
+
+function handleDecorDragStart(e) {
+  draggedDecor = e.target;
+  const rect = draggedDecor.getBoundingClientRect();
+  const gardenInner = document.querySelector('.garden-inner');
+  const gardenRect = gardenInner.getBoundingClientRect();
+  
+  decorDragOffsetX = e.clientX - rect.left;
+  decorDragOffsetY = e.clientY - rect.top;
+  
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', '');
+}
+
+function handleDecorDragEnd(e) {
+  if (!draggedDecor) return;
+  
+  const gardenInner = document.querySelector('.garden-inner');
+  const gardenRect = gardenInner.getBoundingClientRect();
+  
+  const newLeft = e.clientX - gardenRect.left - decorDragOffsetX;
+  const newTop = e.clientY - gardenRect.top - decorDragOffsetY;
+  
+  // Constrain to garden bounds
+  const maxLeft = gardenRect.width - 45;
+  const maxTop = gardenRect.height - 45;
+  
+  const clampedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+  const clampedTop = Math.max(0, Math.min(newTop, maxTop));
+  
+  draggedDecor.style.left = clampedLeft + 'px';
+  draggedDecor.style.top = clampedTop + 'px';
+  
+  // Update decorItems array
+  const id = draggedDecor.dataset.id;
+  const decorItem = decorItems.find(item => item.id === id);
+  if (decorItem) {
+    decorItem.position = { left: clampedLeft, top: clampedTop };
+    saveDecorData();
+  }
+  
+  draggedDecor = null;
+}
+
+// Save decor data to Firestore
+async function saveDecorData() {
+  if (!currentUser) return;
+  
+  try {
+    console.log('Saving decor items to Firestore:', decorItems);
+    await db.collection('gardens').doc(currentUser.uid).set({
+      decorItems: decorItems
+    }, { merge: true });
+    console.log('Decor data saved to Firestore successfully');
+    
+    // Also save to localStorage as backup
+    localStorage.setItem(DECOR_ITEMS_KEY, JSON.stringify(decorItems));
+  } catch (error) {
+    console.error('Error saving decor data:', error);
+    // Still save to localStorage even if Firestore fails
+    localStorage.setItem(DECOR_ITEMS_KEY, JSON.stringify(decorItems));
+  }
+}
+
+// Load decor data from Firestore
+async function loadDecorData() {
+  if (!currentUser) {
+    console.log('loadDecorData: No current user');
+    return;
+  }
+  
+  console.log('loadDecorData: Loading decor data for user', currentUser.uid);
+  
+  try {
+    const doc = await db.collection('gardens').doc(currentUser.uid).get();
+    console.log('loadDecorData: Document exists?', doc.exists);
+    
+    if (doc.exists) {
+      const data = doc.data();
+      console.log('loadDecorData: Document data keys:', Object.keys(data));
+      
+      if (data.decorItems) {
+        decorItems = data.decorItems;
+        console.log('Decor items loaded from Firestore:', decorItems);
+        localStorage.setItem(DECOR_ITEMS_KEY, JSON.stringify(decorItems));
+        renderDecorItems();
+      } else {
+        console.log('No decor items found in Firestore document, checking localStorage...');
+        // Try loading from localStorage as backup
+        const localDecor = JSON.parse(localStorage.getItem(DECOR_ITEMS_KEY) || '[]');
+        if (localDecor.length > 0) {
+          decorItems = localDecor;
+          console.log('Decor items loaded from localStorage:', decorItems);
+          renderDecorItems();
+        } else {
+          console.log('No decor items in localStorage either');
+        }
+      }
+    } else {
+      console.log('Document does not exist yet, checking localStorage...');
+      // Try loading from localStorage as backup
+      const localDecor = JSON.parse(localStorage.getItem(DECOR_ITEMS_KEY) || '[]');
+      if (localDecor.length > 0) {
+        decorItems = localDecor;
+        console.log('Decor items loaded from localStorage:', decorItems);
+        renderDecorItems();
+      } else {
+        console.log('No decor items in localStorage');
+      }
+    }
+  } catch (error) {
+    console.error('Error loading decor data:', error);
+    // Try loading from localStorage as backup
+    const localDecor = JSON.parse(localStorage.getItem(DECOR_ITEMS_KEY) || '[]');
+    if (localDecor.length > 0) {
+      decorItems = localDecor;
+      console.log('Decor items loaded from localStorage (error fallback):', decorItems);
+      renderDecorItems();
+    }
+  }
+}
+
+// Render decor items in garden
+function renderDecorItems() {
+  const gardenInner = document.querySelector('.garden-inner');
+  if (!gardenInner) return;
+  
+  console.log('renderDecorItems called with', decorItems.length, 'items');
+  
+  // Remove existing decor items
+  const existingDecor = gardenInner.querySelectorAll('.decor-item');
+  existingDecor.forEach(decor => decor.remove());
+  
+  // Add decor items from data
+  decorItems.forEach(item => {
+    const decor = document.createElement('div');
+    decor.className = 'decor-item';
+    decor.dataset.id = item.id;
+    decor.dataset.type = item.type;
+    decor.style.cssText = `position:absolute;top:${item.position.top}px;left:${item.position.left}px;font-size:45px;cursor:move;z-index:100;`;
+    decor.innerHTML = item.emoji;
+    decor.draggable = true;
+    
+    // Add delete button (only visible in edit mode)
+    const deleteBtn = document.createElement('button');
+    deleteBtn.innerHTML = '✕';
+    deleteBtn.style.cssText = `position:absolute;top:-8px;right:-8px;width:24px;height:24px;background:#E74C3C;color:white;border:none;border-radius:50%;font-size:14px;cursor:pointer;display:${editMode ? 'flex' : 'none'};align-items:center;justify-content:center;z-index:101;`;
+    deleteBtn.onclick = (e) => {
+      e.stopPropagation();
+      deleteDecor(item.id);
+    };
+    decor.appendChild(deleteBtn);
+    
+    decor.addEventListener('dragstart', handleDecorDragStart);
+    decor.addEventListener('dragend', handleDecorDragEnd);
+    
+    gardenInner.appendChild(decor);
+  });
+  
+  console.log('Rendered', decorItems.length, 'decor items');
+}
+
+// Delete decor item
+function deleteDecor(decorId) {
+  if (!confirm('Ești sigur că vrei să ștergi acest element decorativ?')) {
+    return;
+  }
+  
+  // Remove from DOM
+  const decorElement = document.querySelector(`.decor-item[data-id="${decorId}"]`);
+  if (decorElement) {
+    decorElement.remove();
+  }
+  
+  // Remove from decorItems array
+  decorItems = decorItems.filter(item => item.id !== decorId);
+  
+  // Only save to Firestore if NOT in edit mode
+  // In edit mode, changes are saved when user clicks "Save"
+  if (!editMode) {
+    saveDecorData();
+  }
+  
+  showToast('✅ Element decorativ șters!');
+}
 async function initializeFirebase() {
   // Load email history on page load
   loadEmailHistory();
@@ -1188,11 +1740,45 @@ async function initializeFirebase() {
           authBtn.onclick = handleLogout;
         }
         
+        // Show user email in header
+        const userEmailDiv = document.getElementById('user-email');
+        if (userEmailDiv && user.email) {
+          userEmailDiv.textContent = `📧 ${user.email}`;
+          userEmailDiv.style.display = 'block';
+        }
+        
+        // Show edit button for logged-in users
+        const editBtn = document.getElementById('edit-mode-btn');
+        if (editBtn) {
+          editBtn.style.display = 'flex';
+          console.log('Edit button shown for logged-in user');
+        } else {
+          console.log('Edit button not found');
+        }
+        
         // Load data from Firestore for this user
         const result = await loadFromFirestore();
         gardenData = result.gardenData;
+        
+        // Check if user is new (empty gardenData)
+        isNewUser = Object.keys(gardenData).length === 0;
+        console.log('isNewUser:', isNewUser, 'gardenData keys:', Object.keys(gardenData).length);
+        
+        // If new user, update button text
+        if (isNewUser) {
+          updateEditButtonForNewUser();
+        } else {
+          updateEditButtonForExistingUser();
+        }
+        
         loadCustomPlants();
         initBeds();
+        console.log('About to load decor data...');
+        loadDecorData().then(() => {
+          console.log('Decor data loading completed');
+        }).catch(err => {
+          console.error('Error in loadDecorData:', err);
+        });
       } else {
         // No user signed in - show login modal
         console.log('No user signed in');
@@ -1203,6 +1789,12 @@ async function initializeFirebase() {
         if (authBtn) {
           authBtn.textContent = '👤 Autentificare';
           authBtn.onclick = openAuthModal;
+        }
+        
+        // Hide user email in header
+        const userEmailDiv = document.getElementById('user-email');
+        if (userEmailDiv) {
+          userEmailDiv.style.display = 'none';
         }
         
         // Don't load or display garden data until authenticated
@@ -1265,7 +1857,9 @@ async function loadFromFirestore() {
       if (data.customPlants) {
         localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(data.customPlants));
       }
-      updateSyncStatus('✓ Date sincronizate');
+      const plantCount = Object.keys(data.gardenData || {}).length;
+      const timestamp = new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+      updateSyncStatus(`✓ Sincronizat la ${timestamp} • ${plantCount} plante`);
       return { gardenData: data.gardenData || {}, customPlants: data.customPlants || [] };
     }
   } catch (error) {
@@ -1453,6 +2047,12 @@ async function handleLogout() {
     await auth.signOut();
     currentUser = null;
     showToast('✅ Te-ai deconectat');
+    
+    // Hide edit button for logged-out users
+    const editBtn = document.getElementById('edit-mode-btn');
+    if (editBtn) {
+      editBtn.style.display = 'none';
+    }
     
     // Show logout modal instead of reloading
     document.getElementById('logout-modal-overlay').classList.add('open');
@@ -1990,13 +2590,25 @@ function closeShareModal() {
 }
 
 function openDataManager() {
-  document.getElementById('data-modal-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  console.log('openDataManager called');
+  const overlay = document.getElementById('data-modal-overlay');
+  if (overlay) {
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  } else {
+    console.error('data-modal-overlay not found');
+  }
 }
 
 function closeDataManager() {
-  document.getElementById('data-modal-overlay').classList.remove('open');
-  document.body.style.overflow = '';
+  console.log('closeDataManager called');
+  const overlay = document.getElementById('data-modal-overlay');
+  if (overlay) {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  } else {
+    console.error('data-modal-overlay not found');
+  }
 }
 
 function importFromUrl() {
@@ -2187,6 +2799,12 @@ function saveCustomPlant() {
     position: { left: left, top: top }
   };
   
+  // If this is the first plant for a new user, update button text
+  if (isNewUser && Object.keys(gardenData).length === 1) {
+    updateEditButtonForExistingUser();
+    isNewUser = false;
+  }
+  
   // Track this plant as added during edit mode
   if (editMode) {
     plantsAddedDuringEdit.push(id);
@@ -2212,6 +2830,7 @@ function saveCustomPlant() {
       <div class="bed-emoji" style="pointer-events:none;">${emoji}</div>
       <div class="bed-name" style="pointer-events:none;">${name}</div>
       <div class="bed-type-badge" style="pointer-events:none;">${type}</div>
+      <div class="hover-label">Adaugă Detalii</div>
       <div class="resize-handle" style="position:absolute;bottom:0;right:0;width:15px;height:15px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:0 0 10px 0;pointer-events:auto;" onmousedown="handleResizeStart(event)"></div>
     `;
     
@@ -2314,6 +2933,13 @@ function handleResizeEnd(e) {
       resizingBed.classList.add('small');
     } else {
       resizingBed.classList.remove('small');
+    }
+    
+    // Update 'narrow' class based on new width
+    if (resizingBed.offsetWidth < 85) {
+      resizingBed.classList.add('narrow');
+    } else {
+      resizingBed.classList.remove('narrow');
     }
     
     // Save to Firebase immediately
@@ -2867,11 +3493,17 @@ function initBeds() {
           bed.classList.add('small');
         }
         
+        // Add 'narrow' class if bed width is under 85px
+        if (bedWidth < 85) {
+          bed.classList.add('narrow');
+        }
+        
         bed.draggable = true;
         bed.innerHTML = `
           <div class="bed-emoji">${data.emoji || plant.emoji}</div>
           <div class="bed-name">${data.name || plant.name}</div>
           <div class="bed-type-badge">${plant.type}</div>
+          <div class="hover-label">Adaugă Detalii</div>
           <div class="resize-handle" style="position:absolute;bottom:0;right:0;width:15px;height:15px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:0 0 10px 0;" onmousedown="handleResizeStart(event)"></div>
         `;
         
@@ -2906,6 +3538,20 @@ function initBeds() {
     if (data.dimensions) {
       bed.style.width = data.dimensions.width + 'px';
       bed.style.height = data.dimensions.height + 'px';
+      
+      // Update 'small' class based on dimensions
+      if (data.dimensions.width <= 80 && data.dimensions.height <= 75) {
+        bed.classList.add('small');
+      } else {
+        bed.classList.remove('small');
+      }
+      
+      // Update 'narrow' class based on width
+      if (data.dimensions.width < 85) {
+        bed.classList.add('narrow');
+      } else {
+        bed.classList.remove('narrow');
+      }
     }
     
     // Add drag functionality to existing beds if they don't have it
@@ -2927,6 +3573,14 @@ function initBeds() {
       const existingHandle = bed.querySelector('.resize-handle');
       if (existingHandle) existingHandle.style.display = 'none';
     }
+    
+    // Add hover label if not present
+    if (!bed.querySelector('.hover-label')) {
+      const hoverLabel = document.createElement('div');
+      hoverLabel.className = 'hover-label';
+      hoverLabel.textContent = 'Adaugă Detalii';
+      bed.appendChild(hoverLabel);
+    }
   });
   
   // Set today as default date in modal
@@ -2940,6 +3594,7 @@ function toggleEditMode() {
   const editBtn = document.getElementById('edit-mode-btn');
   const editControls = document.getElementById('edit-mode-controls');
   const addPlantBtn = document.getElementById('add-plant-btn');
+  const addDecorBtn = document.getElementById('add-decor-btn');
   
   if (editMode) {
     // Enter edit mode
@@ -2947,7 +3602,20 @@ function toggleEditMode() {
     editBtn.style.background = '#E67E22';
     editControls.style.display = 'flex';
     addPlantBtn.classList.remove('hidden');
-    console.log('Edit mode activated, add plant button shown');
+    addDecorBtn.classList.remove('hidden');
+    console.log('Edit mode activated, add plant and decor buttons shown');
+    
+    // Add editing class to garden-inner to hide hover labels
+    const gardenInner = document.querySelector('.garden-inner');
+    if (gardenInner) {
+      gardenInner.classList.add('editing');
+    }
+    
+    // Re-render decor items to show delete buttons
+    renderDecorItems();
+    
+    // Save decor items state before editing
+    decorItemsBeforeEdit = JSON.stringify(decorItems);
     
     // Track plants added during this edit session
     plantsAddedDuringEdit = [];
@@ -3010,15 +3678,28 @@ function saveEditMode() {
   const editBtn = document.getElementById('edit-mode-btn');
   const editControls = document.getElementById('edit-mode-controls');
   const addPlantBtn = document.getElementById('add-plant-btn');
+  const addDecorBtn = document.getElementById('add-decor-btn');
   
   editBtn.textContent = '✏️ Editează Grădina';
   editBtn.style.background = '#FF9800';
   editControls.style.display = 'none';
   addPlantBtn.classList.add('hidden');
+  addDecorBtn.classList.add('hidden');
+  
+  // Remove editing class from garden-inner to show hover labels
+  const gardenInner = document.querySelector('.garden-inner');
+  if (gardenInner) {
+    gardenInner.classList.remove('editing');
+  }
+  
+  // Re-render decor items to hide delete buttons
+  renderDecorItems();
   
   // Save to both localStorage and Firebase
   saveData(gardenData);
+  saveDecorData(); // Save decor changes
   gardenDataBeforeEdit = null;
+  decorItemsBeforeEdit = null;
   plantsAddedDuringEdit = [];
   
   // Hide resize handles
@@ -3034,11 +3715,29 @@ function cancelEditMode() {
   const editBtn = document.getElementById('edit-mode-btn');
   const editControls = document.getElementById('edit-mode-controls');
   const addPlantBtn = document.getElementById('add-plant-btn');
+  const addDecorBtn = document.getElementById('add-decor-btn');
   
   editBtn.textContent = '✏️ Editează Grădina';
   editBtn.style.background = '#FF9800';
   editControls.style.display = 'none';
   addPlantBtn.classList.add('hidden');
+  addDecorBtn.classList.add('hidden');
+  
+  // Remove editing class from garden-inner to show hover labels
+  const gardenInner = document.querySelector('.garden-inner');
+  if (gardenInner) {
+    gardenInner.classList.remove('editing');
+  }
+  
+  // Re-render decor items to hide delete buttons
+  renderDecorItems();
+  
+  // Restore decor items if we had a saved state
+  if (decorItemsBeforeEdit) {
+    decorItems = JSON.parse(decorItemsBeforeEdit);
+    renderDecorItems();
+    decorItemsBeforeEdit = null;
+  }
   
   // Restore previous state if we had one
   if (gardenDataBeforeEdit) {
