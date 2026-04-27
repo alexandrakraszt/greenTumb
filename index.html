@@ -1890,7 +1890,9 @@ async function saveData(data) {
         customPlants: customPlants,
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
       });
-      updateSyncStatus('✓ Salvat în Firebase');
+      const plantCount = Object.keys(data || {}).length;
+      const timestamp = new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+      updateSyncStatus(`✓ Sincronizat la ${timestamp} • ${plantCount} plante`);
     } catch (error) {
       console.error('Error saving to Firestore:', error);
       updateSyncStatus('⚠️ Eroare salvare');
