@@ -1840,7 +1840,11 @@ async function loadData() {
 
 // Load from Firestore
 async function loadFromFirestore() {
-  if (!currentUser) return { gardenData: {}, customPlants: [] };
+  console.log('[loadFromFirestore] Starting load from Firestore');
+  if (!currentUser) {
+    console.log('[loadFromFirestore] No current user, returning empty data');
+    return { gardenData: {}, customPlants: [] };
+  }
   
   // Show loading overlay
   const loadingOverlay = document.getElementById('loading-overlay');
@@ -1849,21 +1853,27 @@ async function loadFromFirestore() {
   }
   
   try {
+    console.log('[loadFromFirestore] Loading data for user:', currentUser.uid);
     const doc = await db.collection('gardens').doc(currentUser.uid).get();
     if (doc.exists) {
       const data = doc.data();
+      console.log('[loadFromFirestore] Document exists, data keys:', Object.keys(data));
       // Save to localStorage as backup
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data.gardenData));
       if (data.customPlants) {
         localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(data.customPlants));
       }
-      const plantCount = Object.keys(data.gardenData || {}).length;
+      // Count only plants that have beds in the garden-inner (same as progress section)
+      const plantCount = Object.keys(PLANTS).filter(id => document.querySelector(`[data-id="${id}"]`)).length;
       const timestamp = new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
       updateSyncStatus(`✓ Sincronizat la ${timestamp} • ${plantCount} plante`);
+      console.log('[loadFromFirestore] Data loaded successfully, plant count:', plantCount);
       return { gardenData: data.gardenData || {}, customPlants: data.customPlants || [] };
+    } else {
+      console.log('[loadFromFirestore] Document does not exist for user');
     }
   } catch (error) {
-    console.error('Error loading from Firestore:', error);
+    console.error('[loadFromFirestore] Error loading from Firestore:', error);
     updateSyncStatus('⚠️ Eroare sincronizare');
   } finally {
     // Hide loading overlay
@@ -1871,32 +1881,42 @@ async function loadFromFirestore() {
       loadingOverlay.style.display = 'none';
     }
   }
+  console.log('[loadFromFirestore] Returning empty data');
   return { gardenData: {}, customPlants: [] };
 }
 
 // Save data to Firestore (and localStorage as backup)
 async function saveData(data) {
+  console.log('[saveData] Starting save to Firestore, data keys:', Object.keys(data));
   // Always save to localStorage first for instant feedback
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch(e) {}
+    console.log('[saveData] Saved to localStorage');
+  } catch(e) {
+    console.error('[saveData] Error saving to localStorage:', e);
+  }
 
   // Then save to Firestore
   if (currentUser) {
     try {
+      console.log('[saveData] Saving to Firestore for user:', currentUser.uid);
       const customPlants = JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]');
       await db.collection('gardens').doc(currentUser.uid).set({
         gardenData: data,
         customPlants: customPlants,
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
       });
-      const plantCount = Object.keys(data || {}).length;
+      // Count only plants that have beds in the garden-inner (same as progress section)
+      const plantCount = Object.keys(PLANTS).filter(id => document.querySelector(`[data-id="${id}"]`)).length;
       const timestamp = new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
       updateSyncStatus(`✓ Sincronizat la ${timestamp} • ${plantCount} plante`);
+      console.log('[saveData] Successfully saved to Firestore, plant count:', plantCount);
     } catch (error) {
-      console.error('Error saving to Firestore:', error);
+      console.error('[saveData] Error saving to Firestore:', error);
       updateSyncStatus('⚠️ Eroare salvare');
     }
+  } else {
+    console.log('[saveData] No current user, skipping Firestore save');
   }
 }
 
@@ -1969,6 +1989,7 @@ function updateAuthModalUI() {
 }
 
 async function handleAuthSubmit() {
+  console.log('[handleAuthSubmit] Authentication submit, mode:', isSignupMode ? 'signup' : 'login');
   const email = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
   const confirmPassword = document.getElementById('auth-confirm-password').value;
@@ -1976,6 +1997,7 @@ async function handleAuthSubmit() {
 
   // Validation
   if (!email || !password) {
+    console.log('[handleAuthSubmit] Validation failed: missing fields');
     errorDiv.textContent = 'Te rugăm să completezi toate câmpurile';
     errorDiv.style.display = 'block';
     return;
@@ -1983,11 +2005,13 @@ async function handleAuthSubmit() {
 
   if (isSignupMode) {
     if (password.length < 6) {
+      console.log('[handleAuthSubmit] Validation failed: password too short');
       errorDiv.textContent = 'Parola trebuie să aibă cel puțin 6 caractere';
       errorDiv.style.display = 'block';
       return;
     }
     if (password !== confirmPassword) {
+      console.log('[handleAuthSubmit] Validation failed: passwords do not match');
       errorDiv.textContent = 'Parolele nu coincid';
       errorDiv.style.display = 'block';
       return;
@@ -1997,8 +2021,10 @@ async function handleAuthSubmit() {
   try {
     if (isSignupMode) {
       // Sign up
+      console.log('[handleAuthSubmit] Attempting sign up for email:', email);
       const userCredential = await auth.createUserWithEmailAndPassword(email, password);
       currentUser = userCredential.user;
+      console.log('[handleAuthSubmit] Sign up successful, user ID:', currentUser.uid);
       saveEmailToHistory(email);
       showToast('✅ Cont creat cu succes!');
       closeAuthModal();
@@ -2011,8 +2037,10 @@ async function handleAuthSubmit() {
       }
     } else {
       // Log in
+      console.log('[handleAuthSubmit] Attempting login for email:', email);
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
       currentUser = userCredential.user;
+      console.log('[handleAuthSubmit] Login successful, user ID:', currentUser.uid);
       saveEmailToHistory(email);
       showToast('✅ Autentificat cu succes!');
       closeAuthModal();
@@ -2024,7 +2052,7 @@ async function handleAuthSubmit() {
       console.log('Loaded data from Firestore');
     }
   } catch (error) {
-    console.error('Auth error:', error);
+    console.error('[handleAuthSubmit] Authentication error:', error);
     let errorMessage = 'Eroare la autentificare';
     
     if (error.code === 'auth/email-already-in-use') {
@@ -2045,22 +2073,26 @@ async function handleAuthSubmit() {
 }
 
 async function handleLogout() {
+  console.log('[handleLogout] Starting logout process');
   try {
     await auth.signOut();
     currentUser = null;
+    console.log('[handleLogout] User signed out successfully');
     showToast('✅ Te-ai deconectat');
     
     // Hide edit button for logged-out users
     const editBtn = document.getElementById('edit-mode-btn');
     if (editBtn) {
       editBtn.style.display = 'none';
+      console.log('[handleLogout] Edit button hidden');
     }
     
     // Show logout modal instead of reloading
     document.getElementById('logout-modal-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
+    console.log('[handleLogout] Logout modal shown');
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error('[handleLogout] Logout error:', error);
     showToast('❌ Eroare la deconectare');
   }
 }
@@ -2072,21 +2104,34 @@ function closeLogoutModal() {
 
 // ============ TABS ============
 function showTab(id) {
+  console.log('[showTab] Switching to tab:', id);
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
   event.currentTarget.classList.add('active');
-  if (id === 'plan-gradina') {/* nothing to render */}
-  if (id === 'calendar') renderCalendar();
-  if (id === 'progres') renderProgress();
+  if (id === 'plan-gradina') {
+    console.log('[showTab] Garden plan tab activated');
+  }
+  if (id === 'calendar') {
+    console.log('[showTab] Rendering calendar');
+    renderCalendar();
+  }
+  if (id === 'progres') {
+    console.log('[showTab] Rendering progress');
+    renderProgress();
+  }
 }
 
 // ============ MODAL ============
 let currentId = null;
 
 function openModal(id) {
+  console.log('[openModal] Opening modal for plant:', id);
   // Don't open modal if in edit mode
-  if (editMode) return;
+  if (editMode) {
+    console.log('[openModal] Modal blocked - edit mode is active');
+    return;
+  }
   
   currentId = id;
   const plant = PLANTS[id];
@@ -2100,6 +2145,8 @@ function openModal(id) {
   document.getElementById('modal-watering-date').value = data.wateringDate || '';
   document.getElementById('modal-type').value = data.type || plant.type;
   
+  console.log('[openModal] Modal populated with plant data');
+  
   // Reset harvest inputs
   document.getElementById('modal-harvest-date').value = '';
   document.getElementById('modal-harvest-quantity').value = '';
@@ -2107,12 +2154,6 @@ function openModal(id) {
   // Reset succession inputs
   document.getElementById('modal-succession-date').value = '';
   document.getElementById('modal-succession-interval').value = '';
-  
-  // Display harvest list
-  renderHarvestList(data.harvest || []);
-  
-  // Display succession list
-  renderSuccessionList(data.succession || []);
   
   // Reset modal title input
   document.getElementById('modal-title-input').value = data.name || plant.name;
@@ -2153,9 +2194,11 @@ function openModal(id) {
 }
 
 function closeModal() {
+  console.log('[closeModal] Closing modal');
   document.getElementById('modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
   currentId = null;
+  console.log('[closeModal] Modal closed, currentId reset');
 }
 
 function handleOverlayClick(e) {
@@ -2174,31 +2217,43 @@ function getSelectedStatus() {
 }
 
 function saveModal() {
+  console.log('[saveModal] Saving modal data for plant:', currentId);
   if (!currentId) return;
-  const status = getSelectedStatus();
-  const date = document.getElementById('modal-date').value;
-  const noteText = document.getElementById('modal-note').value.trim();
-  const wateringDate = document.getElementById('modal-watering-date').value;
+  
+  const plant = PLANTS[currentId];
+  const data = getData(currentId);
+  
+  const dateInput = document.getElementById('modal-date').value;
+  const noteInput = document.getElementById('modal-note').value;
+  const status = document.querySelector('.status-btn.selected')?.dataset.status || data.status;
+  const emojiInput = document.getElementById('modal-emoji').textContent;
+  const nameInput = document.getElementById('modal-title').textContent;
   const typeInput = document.getElementById('modal-type').value;
+  const wateringDateInput = document.getElementById('modal-watering-date').value;
   
-  // Get name from input if in edit mode, otherwise from display
-  const titleInput = document.getElementById('modal-title-input');
-  const nameInput = titleInput.style.display !== 'none' ? titleInput.value.trim() : document.getElementById('modal-title').textContent.trim();
+  console.log('[saveModal] Data to save:', { dateInput, noteInput, status, emojiInput, nameInput, typeInput, wateringDateInput });
   
-  // Get emoji from display
-  const emojiInput = document.getElementById('modal-emoji').textContent.trim();
+  gardenData[currentId] = {
+    ...data,
+    date: dateInput,
+    note: noteInput,
+    status: status,
+    emoji: emojiInput,
+    name: nameInput,
+    type: typeInput,
+    wateringDate: wateringDateInput
+  };
   
-  const existing = getData(currentId);
-  const history = existing.history || [];
-  const harvest = existing.harvest || [];
-  const succession = existing.succession || [];
-  
-  const today = new Date().toLocaleDateString('ro-RO');
-  if (noteText || status !== existing.status || nameInput !== existing.name || emojiInput !== existing.emoji) {
-    history.push({ date: today, status, note: noteText });
+  // Add to history if status changed
+  if (status !== data.status) {
+    gardenData[currentId].history = (data.history || []).concat({
+      date: new Date().toISOString().split('T')[0],
+      status: status,
+      note: noteInput
+    });
+    console.log('[saveModal] Status changed, history updated');
   }
-
-  gardenData[currentId] = { status, date, note: noteText, history, name: nameInput, emoji: emojiInput, wateringDate, harvest, succession, type: typeInput };
+  
   saveData(gardenData);
 
   // Update bed dot
@@ -2231,6 +2286,7 @@ function saveModal() {
   }
   
   closeModal();
+  console.log('[saveModal] Modal saved and closed');
   showToast('✅ Salvat cu succes!');
 }
 
@@ -3472,11 +3528,13 @@ function renderProgress() {
 
 // Init: sync statuses from stored data to beds
 function initBeds() {
+  console.log('[initBeds] Initializing beds, gardenData keys:', Object.keys(gardenData));
   Object.entries(gardenData).forEach(([id, data]) => {
     let bed = document.querySelector(`[data-id="${id}"]`);
     
     // If bed doesn't exist in DOM but exists in gardenData (custom plant), create it
     if (!bed && data.position) {
+      console.log('[initBeds] Creating new bed for plant:', id);
       const plant = PLANTS[id];
       if (plant) {
         const gardenInner = document.querySelector('.garden-inner');
@@ -3514,6 +3572,7 @@ function initBeds() {
         bed.addEventListener('dragend', handleDragEnd);
         
         gardenInner.appendChild(bed);
+        console.log('[initBeds] Bed created and added to garden');
       }
     }
     
@@ -3585,6 +3644,8 @@ function initBeds() {
     }
   });
   
+  console.log('[initBeds] Beds initialization complete');
+  
   // Set today as default date in modal
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('modal-date').value = today;
@@ -3592,6 +3653,7 @@ function initBeds() {
 
 // Edit mode functions
 function toggleEditMode() {
+  console.log('[toggleEditMode] Toggling edit mode, current state:', editMode);
   editMode = !editMode;
   const editBtn = document.getElementById('edit-mode-btn');
   const editControls = document.getElementById('edit-mode-controls');
@@ -3599,13 +3661,13 @@ function toggleEditMode() {
   const addDecorBtn = document.getElementById('add-decor-btn');
   
   if (editMode) {
-    // Enter edit mode
+    console.log('[toggleEditMode] Entering edit mode');
     editBtn.textContent = '✏️ Editare activă';
     editBtn.style.background = '#E67E22';
     editControls.style.display = 'flex';
     addPlantBtn.classList.remove('hidden');
     addDecorBtn.classList.remove('hidden');
-    console.log('Edit mode activated, add plant and decor buttons shown');
+    console.log('[toggleEditMode] Edit mode activated, add plant and decor buttons shown');
     
     // Add editing class to garden-inner to hide hover labels
     const gardenInner = document.querySelector('.garden-inner');
@@ -3618,6 +3680,7 @@ function toggleEditMode() {
     
     // Save decor items state before editing
     decorItemsBeforeEdit = JSON.stringify(decorItems);
+    console.log('[toggleEditMode] Decor items state saved');
     
     // Track plants added during this edit session
     plantsAddedDuringEdit = [];
@@ -3629,29 +3692,7 @@ function toggleEditMode() {
       bed.addEventListener('dragstart', handleDragStart);
       bed.addEventListener('dragend', handleDragEnd);
     });
-    
-    // First, update gardenData with current DOM state (capture positions)
-    beds.forEach(bed => {
-      const id = bed.dataset.id;
-      // Ensure data exists for this bed
-      if (!gardenData[id]) {
-        gardenData[id] = { status: 'neplantat', date: '', note: '', history: [] };
-      }
-      const data = gardenData[id];
-      if (data) {
-        // Always update with current DOM state
-        const computedStyle = window.getComputedStyle(bed);
-        data.dimensions = {
-          width: bed.offsetWidth,
-          height: bed.offsetHeight
-        };
-        data.position = {
-          left: parseInt(computedStyle.left) || 0,
-          top: parseInt(computedStyle.top) || 0
-        };
-      }
-    });
-    
+    console.log('[toggleEditMode] Drag functionality added to all beds');
     // Then save current state before editing (now includes current positions)
     gardenDataBeforeEdit = JSON.stringify(gardenData);
     
