@@ -129,6 +129,208 @@
     color: var(--green-pale);
     margin-top: 4px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .weather-widget {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--warm-white);
+    padding: 12px 16px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid #e0e0e0;
+  }
+  .weather-widget-full {
+    background: var(--warm-white);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+    width: max-content;
+    min-width: 100%;
+    margin: 0 auto;
+  }
+  .weather-current {
+    background: linear-gradient(135deg, var(--green-deep), var(--green-mid));
+    padding: 2px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .weather-current-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .weather-icon-large {
+    font-size: 20px;
+  }
+  .weather-temp-large {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .weather-desc {
+    font-size: 10px;
+    margin-top: 1px;
+  }
+  .weather-humidity {
+    font-size: 9px;
+    opacity: 0.9;
+    margin-top: 1px;
+  }
+  .forecast-container {
+    display: flex;
+    padding: 8px;
+    gap: 6px;
+    background: #f8f8f8;
+    border-bottom: 1px solid #e0e0e0;
+    overflow-x: auto;
+  }
+  .forecast-day {
+    flex: 1;
+    min-width: 60px;
+    text-align: center;
+    background: white;
+    padding: 5px 4px;
+    border-radius: 6px;
+    border: 1px solid #e8e8e8;
+  }
+  .forecast-day-name {
+    font-size: 9px;
+    font-weight: 700;
+    color: #666;
+    text-transform: uppercase;
+  }
+  .forecast-date {
+    font-size: 9px;
+    color: #999;
+    margin-top: 1px;
+  }
+  .forecast-icon {
+    font-size: 14px;
+    margin: 3px 0;
+  }
+  .forecast-temp {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--green-deep);
+  }
+  .forecast-precip {
+    font-size: 8px;
+    color: #2E86AB;
+    margin-top: 1px;
+  }
+  .gardening-advice {
+    padding: 12px;
+  }
+  .advice-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green-deep);
+    margin: 0 0 8px 0;
+    font-family: 'Playfair Display', serif;
+  }
+  .advice-section {
+    margin-bottom: 8px;
+  }
+  .advice-section:last-child {
+    margin-bottom: 0;
+  }
+  .rain-warning {
+    background: #E3F2FD;
+    border: 1px solid #2196F3;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+  .advice-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 4px;
+  }
+  .advice-text {
+    font-size: 10px;
+    color: #555;
+    line-height: 1.4;
+  }
+  .advice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .advice-item {
+    background: #f8f8f8;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    padding: 8px;
+  }
+  .advice-item-header {
+    font-size: 10px;
+    font-weight: 700;
+    color: #666;
+    margin-bottom: 3px;
+  }
+  .advice-item-status {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--green-deep);
+    margin-bottom: 1px;
+  }
+  .advice-item-status.Amână {
+    color: #E74C3C;
+  }
+  .advice-item-status.Udă {
+    color: #3498DB;
+  }
+  .advice-item-status.Ok {
+    color: #27AE60;
+  }
+  .advice-item-status.Poți {
+    color: #27AE60;
+  }
+  .advice-item-status.Nu {
+    color: #999;
+  }
+  .advice-item-status.Atenție {
+    color: #E67E22;
+  }
+  .advice-item-reason {
+    font-size: 9px;
+    color: #777;
+    line-height: 1.3;
+  }
+  .weather-temp {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--green-deep);
+  }
+  .weather-icon {
+    font-size: 28px;
+  }
+  .weather-details {
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .weather-alert {
+    background: rgba(231, 76, 60, 0.9);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
   }
   .header-info {
     display: flex;
@@ -144,24 +346,27 @@
     border-bottom: 2px solid var(--accent-yellow);
     overflow-x: auto;
     scrollbar-width: none;
+    position: sticky;
+    top: 0;
+    z-index: 50;
   }
   .tabs::-webkit-scrollbar { display: none; }
   .tab-btn {
     flex: 1;
-    min-width: 80px;
-    padding: 12px 8px;
+    min-width: 70px;
+    padding: 10px 6px;
     border: none;
     background: transparent;
     color: var(--green-pale);
     font-family: 'Nunito', sans-serif;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 700;
     cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all 0.2s;
     white-space: nowrap;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     text-align: center;
   }
   .tab-btn.active {
@@ -738,6 +943,272 @@
     background: #f0f0f0;
     transform: scale(1.1);
   }
+
+  /* Companion planting styles */
+  .compat-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 52px);
+    grid-template-rows: repeat(6, 52px);
+    gap: 4px;
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  .compat-grid-area {
+    background: var(--warm-white);
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius-lg);
+    padding: 16px;
+  }
+
+  .compat-cell {
+    width: 52px;
+    height: 52px;
+    border: 0.5px solid var(--wood-light);
+    border-radius: var(--border-radius-md);
+    background: var(--warm-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 22px;
+    position: relative;
+    transition: border-color 0.15s;
+    user-select: none;
+  }
+  .compat-cell:hover {
+    border-color: var(--green-mid);
+  }
+  .compat-cell.empty:hover {
+    background: #f0f0f0;
+  }
+
+  .compat-cell .compat-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 2;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  .compat-badge.good {
+    color: #3B6D11;
+  }
+  .compat-badge.bad {
+    color: #A32D2D;
+  }
+  .compat-badge.warn {
+    color: #854F0B;
+  }
+
+  .compat-cell.highlight-good {
+    border-color: #3B6D11;
+    border-width: 2px;
+  }
+  .compat-cell.highlight-bad {
+    border-color: #A32D2D;
+    border-width: 2px;
+  }
+  .compat-cell.highlight-warn {
+    border-color: #854F0B;
+    border-width: 2px;
+  }
+  .compat-cell.selected {
+    border-color: #185FA5;
+    border-width: 2px;
+    background: #E6F1FB;
+  }
+
+  .compat-tooltip {
+    position: fixed;
+    background: var(--warm-white);
+    border: 0.5px solid #e0e0e0;
+    border-radius: var(--border-radius-md);
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--green-deep);
+    max-width: 200px;
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .compat-tooltip .t-title {
+    font-weight: 500;
+    font-size: 12px;
+    margin-bottom: 2px;
+  }
+  .compat-tooltip .t-good {
+    color: #3B6D11;
+  }
+  .compat-tooltip .t-bad {
+    color: #A32D2D;
+  }
+  .compat-tooltip .t-warn {
+    color: #854F0B;
+  }
+
+  .compat-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .compat-picker-card {
+    background: var(--warm-white);
+    border: 0.5px solid #e0e0e0;
+    border-radius: var(--border-radius-lg);
+    padding: 1rem;
+  }
+  .compat-picker-card h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 10px;
+    letter-spacing: 0.02em;
+  }
+
+  .compat-plant-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .compat-plant-btn {
+    width: 36px;
+    height: 36px;
+    border: 0.5px solid #e0e0e0;
+    border-radius: var(--border-radius-md);
+    background: #f8f8f8;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .compat-plant-btn:hover {
+    border-color: var(--green-mid);
+    background: var(--warm-white);
+  }
+  .compat-plant-btn.active {
+    border-color: #185FA5;
+    border-width: 2px;
+    background: #E6F1FB;
+  }
+
+  .compat-info-card {
+    background: var(--warm-white);
+    border: 0.5px solid #e0e0e0;
+    border-radius: var(--border-radius-lg);
+    padding: 1rem;
+    min-height: 120px;
+  }
+  .compat-info-card h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 8px;
+  }
+
+  .compat-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .compat-row .icon {
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .compat-row .name {
+    font-weight: 500;
+  }
+
+  .compat-legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .compat-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--green-deep);
+    font-weight: 600;
+  }
+  .compat-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .compat-dot.good {
+    background: #3B6D11;
+  }
+  .compat-dot.bad {
+    background: #A32D2D;
+  }
+  .compat-dot.warn {
+    background: #854F0B;
+  }
+
+  .compat-hint {
+    font-size: 12px;
+    color: #888;
+    font-style: italic;
+  }
+
+  .compat-clear-btn {
+    font-size: 12px;
+    color: #E74C3C;
+    background: #fff;
+    border: 1px solid #E74C3C;
+    border-radius: var(--border-radius-md);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .compat-clear-btn:hover {
+    background: #E74C3C;
+    color: #fff;
+  }
+
+  .compat-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .compat-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+
+  .compat-grid-scroll {
+    overflow-x: auto;
+  }
+
+  @media (max-width: 768px) {
+    .compat-layout {
+      grid-template-columns: 1fr;
+    }
+    .compat-sidebar {
+      order: -1;
+    }
+  }
 </style>
 </head>
 <body>
@@ -745,7 +1216,6 @@
 <div class="header">
   <h1>🌱 Green Thumb</span></h1>
   <div class="header-info">
-    <div class="header-weather" id="current-weather"></div>
     <div class="header-date" id="current-date"></div>
     <div id="user-email" style="font-size:10px;color:var(--green-pale);margin-top:2px;font-weight:600;display:none;"></div>
     <div id="sync-status" style="font-size:10px;color:var(--green-pale);margin-top:2px;font-weight:600;">⏳ Inițializare...</div>
@@ -758,18 +1228,28 @@
 
 <div class="tabs">
   <button class="tab-btn active" onclick="showTab('plan-gradina')" data-label="Plan Grădină">🗺️ <span>Plan Grădină</span></button>
+  <button class="tab-btn" onclick="showTab('companion')" data-label="Ghid Plantare">🌱 <span>Ghid Plantare</span></button>
   <button class="tab-btn" onclick="showTab('calendar')" data-label="Calendar de plantare">📅 <span>Calendar de plantare</span></button>
   <button class="tab-btn" onclick="showTab('progres')" data-label="Progresul Grădinii">📊 <span>Progresul Grădinii</span></button>
-  <button class="tab-btn" onclick="toggleEditMode()" id="edit-mode-btn" style="background:#FF9800;" data-label="Editează Grădina">✏️ <span> Editează Grădina</span></button>
 </div>
 
 <!-- ===== PLAN GRADINA ===== -->
 <div id="tab-plan-gradina" class="panel active">
-  <div id="edit-mode-controls" style="display:none;gap:8px;margin-bottom:12px;align-items:center;">
-    <button onclick="addCustomPlant()" id="add-plant-btn" class="edit-mode-btn hidden" style="background:#3498DB;">➕ Plantă</button>
-    <button onclick="openDecorModal()" id="add-decor-btn" class="edit-mode-btn hidden" style="background:#FFC107;">➕ Decor</button>
-    <button onclick="saveEditMode()" class="edit-mode-btn" style="background:#27AE60;">Salvează</button>
-    <button onclick="cancelEditMode()" class="edit-mode-btn" style="background:#E74C3C;">Anulează</button>
+  <!-- Garden Switcher -->
+  <div id="garden-switcher" style="background:var(--warm-white);border:1px solid #e0e0e0;border-radius:12px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <span style="font-size:14px;font-weight:700;color:var(--green-deep);">🌿 Grădina:</span>
+    <select id="garden-selector" onchange="switchGarden(this.value)" style="flex:1;min-width:150px;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'Nunito',sans-serif;background:#fff;">
+    </select>
+    <button onclick="openGardenModal()" style="background:var(--green-mid);color:white;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;">➕ Adaugă</button>
+    <button onclick="toggleEditMode()" id="edit-mode-btn" style="background:#FF9800;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;">✏️ Editează</button>
+    
+    <!-- Edit mode controls (shown only when edit mode is active) -->
+    <div id="edit-mode-controls" style="display:none;gap:8px;align-items:center;margin-left:auto;">
+      <button onclick="addCustomPlant()" id="add-plant-btn" class="edit-mode-btn hidden" style="background:#3498DB;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;min-width:135px;">➕ Plantă</button>
+      <button onclick="openDecorModal()" id="add-decor-btn" class="edit-mode-btn hidden" style="background:#FFC107;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;min-width:135px;">➕ Decor</button>
+      <button onclick="saveEditMode()" class="edit-mode-btn" style="background:#27AE60;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;min-width:135px;">Salvează</button>
+      <button onclick="cancelEditMode()" class="edit-mode-btn" style="background:#E74C3C;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;min-width:135px;">Anulează</button>
+    </div>
   </div>
 
   <p class="map-scroll-hint">← Glisează pentru a vedea harta →</p>
@@ -788,6 +1268,7 @@
     <div class="garden-inner">
     </div>
   </div>
+  <div id="current-weather" style="margin-top:16px;"></div>
   </div><!-- /garden-scroll-wrapper -->
 </div>
 
@@ -804,13 +1285,65 @@
 }
 </style>
 
+<!-- ===== COMPANION PLANTING ===== -->
+<div id="tab-companion" class="panel">
+  <div style="background:var(--warm-white);border:0.5px solid #e0e0e0;border-radius:12px;padding:16px;margin-bottom:16px;">
+    <h3 style="font-size:14px;font-weight:600;color:var(--green-deep);margin-bottom:12px;">📋 Instrucțiuni</h3>
+    <ul style="margin:0;padding-left:20px;font-size:13px;color:#555;line-height:1.8;">
+      <li><strong>Click</strong> pe o plantă din paletă, apoi <strong>click</strong> pe o celulă pentru a o plasa</li>
+      <li><strong>Double-click</strong> pe o plantă pentru a o șterge</li>
+      <li><strong>Click</strong> pe o plantă plasată pentru a vedea compatibilitatea cu vecinii</li>
+    </ul>
+  </div>
+  <div class="compat-layout">
+    <div class="compat-grid-area">
+      <div class="compat-top-bar">
+        <span style="font-size:12px;color:var(--green-deep);font-weight:600;">Grilă Grădină</span>
+        <button class="compat-clear-btn" onclick="clearCompatGrid()">Curăță tot</button>
+      </div>
+      <div class="compat-grid-scroll">
+        <div class="compat-grid" id="compat-grid"></div>
+      </div>
+      <div class="compat-legend">
+        <div class="compat-legend-item"><div class="compat-dot good"></div>Companion bun</div>
+        <div class="compat-legend-item"><div class="compat-dot bad"></div>Companion rău</div>
+        <div class="compat-legend-item"><div class="compat-dot warn"></div>Neutru/atenție</div>
+      </div>
+    </div>
+    <div class="compat-sidebar">
+      <div class="compat-picker-card">
+        <h3>PLASEAZĂ PLANTĂ</h3>
+        <div class="compat-plant-list" id="compat-palette"></div>
+      </div>
+      <div class="compat-info-card" id="compat-info-card">
+        <h3>COMPATIBILITATE</h3>
+        <p class="compat-hint">Selectează o plantă pentru a vedea companionii săi.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="compat-tooltip" id="compat-tooltip"></div>
+
 <!-- ===== CALENDAR ===== -->
 <div id="tab-calendar" class="panel">
+  <div style="background:var(--warm-white);border:1px solid #e0e0e0;border-radius:12px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+    <span style="font-size:14px;font-weight:700;color:var(--green-deep);">🌿 Grădina:</span>
+    <select id="calendar-garden-filter" onchange="renderCalendar()" style="flex:1;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'Nunito',sans-serif;background:#fff;">
+      <option value="all">Toate grădinile</option>
+    </select>
+  </div>
   <div id="calendar-list"></div>
 </div>
 
 <!-- ===== PROGRES ===== -->
 <div id="tab-progres" class="panel">
+  <div style="background:var(--warm-white);border:1px solid #e0e0e0;border-radius:12px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+    <span style="font-size:14px;font-weight:700;color:var(--green-deep);">🌿 Grădina:</span>
+    <select id="progress-garden-filter" onchange="renderProgress()" style="flex:1;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'Nunito',sans-serif;background:#fff;">
+      <option value="all">Toate grădinile</option>
+    </select>
+  </div>
   <div class="stats-row">
     <div class="big-stat"><div class="num" id="stat-planted">0</div><div class="lbl">Plantate</div></div>
     <div class="big-stat"><div class="num" id="stat-total">0</div><div class="lbl">Total plante</div></div>
@@ -935,12 +1468,10 @@
     <div id="harvest-list" style="margin-top:8px;font-size:12px;max-height:100px;overflow-y:auto;"></div>
 
     <div class="field-label" style="margin-top:16px;">🔄 Plantare succesivă</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <input type="date" id="modal-succession-date" placeholder="Data plantării următoare">
-      <input type="number" id="modal-succession-interval" placeholder="Interval (zile)" min="7">
+    <div id="succession-plan" style="background:#f0f8e8;border-radius:12px;padding:12px;margin-bottom:12px;">
+      <div id="succession-message" style="font-size:13px;color:var(--green-deep);font-weight:600;margin-bottom:8px;"></div>
+      <div id="succession-batches" style="font-size:12px;"></div>
     </div>
-    <button class="btn-secondary" onclick="addSuccessionEntry()" style="margin-top:8px;font-size:14px;padding:8px;">+ Adaugă Plantare</button>
-    <div id="succession-list" style="margin-top:8px;font-size:12px;max-height:100px;overflow-y:auto;"></div>
 
     <div id="history-section" style="display:none;">
       <div class="field-label" style="margin-top:16px;">Istoric notițe</div>
@@ -989,6 +1520,29 @@
     <textarea id="custom-plant-obs" placeholder="Instrucțiuni de îngrijire..." style="min-height:60px;"></textarea>
 
     <button class="btn-primary" onclick="saveCustomPlant()">✅ Adaugă Plantă</button>
+  </div>
+</div>
+
+<!-- ===== GARDEN MODAL ===== -->
+<div class="modal-overlay" id="garden-modal-overlay" onclick="if(event.target===this)closeGardenModal()">
+  <div class="modal" id="garden-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-emoji">🌿</div>
+      <div style="flex:1;">
+        <div class="modal-title">Gestionează Grădinile</div>
+        <div class="modal-subtitle">Adaugă sau șterge grădini</div>
+      </div>
+      <button onclick="closeGardenModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;padding:4px 8px;">✕</button>
+    </div>
+
+    <div class="field-label">Nume grădină nouă</div>
+    <input type="text" id="new-garden-name" placeholder="ex: Grădina din față, Grădina balcon">
+
+    <button class="btn-primary" onclick="createGarden()">➕ Adaugă Grădină</button>
+
+    <div class="field-label" style="margin-top:16px;">Grădini existente</div>
+    <div id="garden-list" style="margin-top:8px;"></div>
   </div>
 </div>
 
@@ -1324,10 +1878,769 @@ const PLANTS = {
   cartofi:  { name: "Cartofi",          emoji: "🥔", type: "strat pământ",  period: "Martie – Apr", obs: "Mușuroi mai târziu" },
 };
 
+// Companion planting data
+const COMPANION_PLANTS = [
+  { id:'tomato',   emoji:'🍅', name:'Tomate' },
+  { id:'carrot',   emoji:'🥕', name:'Morcov' },
+  { id:'basil',    emoji:'🌿', name:'Bazilic' },
+  { id:'garlic',   emoji:'🧄', name:'Usturoi' },
+  { id:'onion',    emoji:'🧅', name:'Ceapă' },
+  { id:'potato',   emoji:'🥔', name:'Cartof' },
+  { id:'pepper',   emoji:'🌶️', name:'Ardei' },
+  { id:'corn',     emoji:'🌽', name:'Porumb' },
+  { id:'lettuce',  emoji:'🥬', name:'Salată' },
+  { id:'cabbage',  emoji:'🥦', name:'Varză' },
+  { id:'cucumber', emoji:'🥒', name:'Castravete' },
+  { id:'strawberry',emoji:'🍓',name:'Căpșuni' },
+  { id:'fennel',   emoji:'🌾', name:'Fenicul' },
+  { id:'sunflower',emoji:'🌻', name:'Floarea Soarelui' },
+  { id:'marigold', emoji:'🌼', name:'Gălbenele' },
+  { id:'bean',     emoji:'🫘', name:'Fasole' },
+  { id:'pea',      emoji:'🌱', name:'Mazăre' },
+  { id:'dill',     emoji:'🌿', name:'Mărar' },
+  { id:'parsley',  emoji:'🌿', name:'Pătrunjel' },
+  { id:'spinach',  emoji:'🍃', name:'Spanac' },
+  { id:'zucchini', emoji:'🎃', name:'Dovlecel' },
+  { id:'beet',     emoji:'🟥', name:'Sfeclă' },
+  { id:'radish',   emoji:'🍥', name:'Ridichi' },
+  { id:'mustard',  emoji:'🌾', name:'Muștar' },
+];
+
+const COMPAT = {
+  tomato: {
+    good: [
+      { id:'basil',     reason:'Bazilicul respinge afidele și îmbunătățește gustul tomatelor.' },
+      { id:'marigold',  reason:'Gălbenelele resping nematozii și musca albă.' },
+      { id:'carrot',    reason:'Morcovii aflează solul din jurul rădăcinilor tomatelor.' },
+      { id:'garlic',    reason:'Usturoiul respinge acarienii și afidele.' },
+      { id:'onion',     reason:'Ține la distanță dăunătorii și nu concurează agresiv.' },
+      { id:'lettuce',   reason:'Acoperă solul și menține umiditatea.' },
+    ],
+    bad: [
+      { id:'fennel',    reason:'Feniculul inhibă creșterea tomatelor și atrage dăunători.' },
+      { id:'cabbage',   reason:'Varza stopează creșterea tomatelor.' },
+      { id:'corn',      reason:'Ambele atrag aceiași dăunători (omizi).' },
+      { id:'potato',    reason:'Risc comun de boli (mana).' },
+    ]
+  },
+  carrot: {
+    good: [
+      { id:'tomato',    reason:'Tomatele oferă umbră morcovilor și resping musca morcovului.' },
+      { id:'onion',     reason:'Mirosul cepei confundă musca morcovului.' },
+      { id:'lettuce',   reason:'Salata aflează solul de suprafață, beneficiind rădăcinile morcovilor.' },
+      { id:'marigold',  reason:'Gălbenelele resping nematozii care dăunează morcovilor.' },
+    ],
+    bad: [
+      { id:'fennel',    reason:'Feniculul stopează semnificativ creșterea morcovilor.' },
+      { id:'potato',    reason:'Ambele concurează pentru nutrienți din solul adânc.' },
+    ]
+  },
+  basil: {
+    good: [
+      { id:'tomato',    reason:'Asociere clasică — respinge afidele și muștele.' },
+      { id:'pepper',    reason:'Respinge afidele și acarienii de pe ardei.' },
+    ],
+    bad: [
+      { id:'fennel',    reason:'Feniculul inhibă creșterea bazilicului.' },
+      { id:'cucumber',  reason:'Inhibă germinarea castraveților.' },
+    ]
+  },
+  garlic: {
+    good: [
+      { id:'tomato',    reason:'Respinge acarienii și afidele.' },
+      { id:'strawberry',reason:'Respinge dăunătorii care afectează fructele căpșunilor.' },
+      { id:'cucumber',  reason:'Ajută la protejarea castraveților de gândaci.' },
+      { id:'carrot',    reason:'Respinge dăunători.' },
+    ],
+    bad: [
+      { id:'onion',     reason:'Concurează pentru aceiași nutrienți și spațiu.' },
+      { id:'potato',    reason:'Poate inhiba creșterea cartofilor.' },
+      { id:'bean',      reason:'Încetinește creșterea.' },
+      { id:'pea',       reason:'Nepotrivit pentru asociere.' },
+    ]
+  },
+  onion: {
+    good: [
+      { id:'carrot',    reason:'Mirosul cepei descurajează musca morcovului.' },
+      { id:'lettuce',   reason:'Beneficiu reciproc, descurajează melcii.' },
+      { id:'strawberry',reason:'Descurajează dăunătorii care vizează căpșunile.' },
+      { id:'tomato',    reason:'Ține la distanță dăunătorii și nu concurează agresiv.' },
+    ],
+    bad: [
+      { id:'garlic',    reason:'Concurează direct pentru nutrienți și spațiu.' },
+      { id:'potato',    reason:'Poate stinge creșterea cartofilor.' },
+      { id:'cabbage',   reason:'Se inhibă reciproc.' },
+      { id:'bean',      reason:'Inhibă creșterea leguminoaselor.' },
+      { id:'pea',       reason:'Afectează dezvoltarea.' },
+    ]
+  },
+  potato: {
+    good: [
+      { id:'marigold',  reason:'Gălbenelele resping gândacii și nematozii.' },
+      { id:'corn',      reason:'Umbra porumbului ajută la retenția umidității pentru cartofi.' },
+      { id:'bean',      reason:'Îmbogățește solul cu azot.' },
+      { id:'cabbage',   reason:'Are cerințe diferite de nutrienți.' },
+    ],
+    bad: [
+      { id:'tomato',    reason:'Partajează boli — trebuie ținute separate.' },
+      { id:'cucumber',  reason:'Ambele sunt susceptibile la aceleași boli.' },
+      { id:'fennel',    reason:'Feniculul stopează creșterea cartofilor.' },
+    ]
+  },
+  pepper: {
+    good: [
+      { id:'basil',     reason:'Bazilicul respinge afidele și acarienii.' },
+      { id:'tomato',    reason:'Condiții de creștere similare; tomatele oferă adăpost de vânt.' },
+      { id:'marigold',  reason:'Respinge musca albă și nematozii.' },
+      { id:'onion',     reason:'Protecție împotriva insectelor.' },
+      { id:'carrot',    reason:'Nu concurează pentru spațiu.' },
+    ],
+    bad: [
+      { id:'fennel',    reason:'Feniculul inhibă creșterea ardeiului.' },
+      { id:'potato',    reason:'Sensibili la aceleași boli.' },
+      { id:'corn',      reason:'Umbrează excesiv.' },
+    ]
+  },
+  corn: {
+    good: [
+      { id:'cucumber',  reason:'Varianta Surorile Trei — porumbul oferă suport.' },
+      { id:'sunflower', reason:'Floarea soarelui atrage polenizatorii pentru porumb.' },
+    ],
+    bad: [
+      { id:'tomato',    reason:'Partajează aceiași dăunători (omizi).' },
+    ]
+  },
+  lettuce: {
+    good: [
+      { id:'carrot',    reason:'Morcovii aflează solul din jurul rădăcinilor salatei.' },
+      { id:'onion',     reason:'Ceapa descurajează melcii care vizează salata.' },
+      { id:'strawberry',reason:'Salata oferă acoperire de sol sub căpșuni.' },
+      { id:'tomato',    reason:'Acoperă solul și menține umiditatea.' },
+    ],
+    bad: [
+      { id:'fennel',    reason:'Secrețiile feniculului inhibă germinarea salatei.' },
+      { id:'cabbage',   reason:'Competitivitate mare.' },
+      { id:'parsley',   reason:'Poate inhiba creșterea.' },
+    ]
+  },
+  cabbage: {
+    good: [
+      { id:'marigold',  reason:'Gălbenelele resping semnificativ omizile de varză.' },
+      { id:'dill',      reason:'Îmbunătățește creșterea.' },
+      { id:'onion',     reason:'Protejează de dăunători.' },
+      { id:'potato',    reason:'Compatibilitate bună.' },
+    ],
+    bad: [
+      { id:'tomato',    reason:'Varza stopează creșterea tomatelor.' },
+      { id:'onion',     reason:'Inhibiție reciprocă a creșterii.' },
+      { id:'fennel',    reason:'Feniculul inhibă plantele din familia verzei.' },
+      { id:'strawberry',reason:'Concurență pentru nutrienți.' },
+    ]
+  },
+  cucumber: {
+    good: [
+      { id:'corn',      reason:'Porumbul oferă un suport natural pentru castraveți.' },
+      { id:'sunflower', reason:'Floarea soarelui atrage polenizatorii și oferă umbră.' },
+      { id:'garlic',    reason:'Usturoiul descurajează gândacii care distrug castraveții.' },
+      { id:'marigold',  reason:'Protejează împotriva insectelor.' },
+      { id:'bean',      reason:'Compatibilitate bună de creștere.' },
+    ],
+    bad: [
+      { id:'basil',     reason:'Inhibă germinarea castraveților.' },
+      { id:'potato',    reason:'Ambele sunt susceptibile la aceleași boli.' },
+      { id:'fennel',    reason:'Feniculul inhibă creșterea castraveților.' },
+      { id:'tomato',    reason:'Condiții diferite de umiditate → risc de boli.' },
+    ]
+  },
+  strawberry: {
+    good: [
+      { id:'garlic',    reason:'Usturoiul respinge dăunătorii care vizează fructele.' },
+      { id:'onion',     reason:'Ceapa descurajează melcii și afidele.' },
+      { id:'lettuce',   reason:'Salata acționează ca mulci viu sub căpșuni.' },
+      { id:'marigold',  reason:'Respinge nematozii în patul de căpșuni.' },
+    ],
+    bad: [
+      { id:'fennel',    reason:'Feniculul inhibă creșterea căpșunilor.' },
+      { id:'cabbage',   reason:'Familia verzei concurează cu căpșunile.' },
+    ]
+  },
+  fennel: {
+    good: [],
+    bad: [
+      { id:'tomato',    reason:'Inhibă creșterea tomatelor și atrage dăunători.' },
+      { id:'carrot',    reason:'Stopează semnificativ creșterea morcovilor.' },
+      { id:'basil',     reason:'Inhibă germinarea bazilicului.' },
+      { id:'lettuce',   reason:'Secrețiile inhibă germinarea salatei.' },
+      { id:'cabbage',   reason:'Inhibă întreaga familie a verzei.' },
+      { id:'pepper',    reason:'Inhibă creșterea ardeiului.' },
+      { id:'potato',    reason:'Stopează creșterea cartofilor.' },
+      { id:'cucumber',  reason:'Inhibă creșterea castraveților.' },
+      { id:'strawberry',reason:'Inhibă creșterea căpșunilor.' },
+    ]
+  },
+  sunflower: {
+    good: [
+      { id:'corn',      reason:'Atrage polenizatorii care beneficiază porumbul.' },
+      { id:'cucumber',  reason:'Oferă umbră și atrage albine.' },
+    ],
+    bad: [
+      { id:'potato',    reason:'Secrețiile rădăcinilor pot inhiba tuberculii de cartof.' },
+    ]
+  },
+  marigold: {
+    good: [
+      { id:'tomato',    reason:'Respinge nematozii și musca albă.' },
+      { id:'carrot',    reason:'Respinge nematozii dăunători morcovilor.' },
+      { id:'pepper',    reason:'Respinge musca albă și nematozii.' },
+      { id:'potato',    reason:'Respinge gândacii și nematozii.' },
+      { id:'cabbage',   reason:'Respinge eficient omizile de varză.' },
+      { id:'strawberry',reason:'Respinge nematozii în patul de căpșuni.' },
+    ],
+    bad: []
+  },
+  bean: {
+    good: [
+      { id:'corn',      reason:'Suport pentru urcare + azot în sol.' },
+      { id:'cucumber',  reason:'Compatibilitate bună de creștere.' },
+      { id:'potato',    reason:'Îmbogățește solul.' },
+    ],
+    bad: [
+      { id:'onion',     reason:'Inhibă dezvoltarea.' },
+      { id:'garlic',    reason:'Efect negativ asupra creșterii.' },
+    ]
+  },
+  pea: {
+    good: [
+      { id:'carrot',    reason:'Nu concurează.' },
+      { id:'lettuce',   reason:'Se dezvoltă rapid împreună.' },
+      { id:'corn',      reason:'Suport pentru urcare.' },
+    ],
+    bad: [
+      { id:'onion',     reason:'Încetinește creșterea.' },
+      { id:'garlic',    reason:'Nepotrivit pentru asociere.' },
+    ]
+  },
+  dill: {
+    good: [
+      { id:'cabbage',  reason:'Îmbunătățește creșterea.' },
+    ],
+    bad: []
+  },
+  parsley: {
+    good: [],
+    bad: [
+      { id:'lettuce',  reason:'Poate inhiba creșterea.' },
+    ]
+  },
+  spinach: {
+    good: [
+      { id:'strawberry',reason:'Acoperă solul și menține umiditatea.' },
+      { id:'radish',   reason:'Creștere rapidă, fără competiție.' },
+      { id:'carrot',   reason:'Nu concurează pentru spațiu.' },
+    ],
+    bad: [
+      { id:'potato',   reason:'Concurență pentru nutrienți.' },
+    ]
+  },
+  zucchini: {
+    good: [
+      { id:'corn',      reason:'Oferă umbră și suport indirect.' },
+      { id:'bean',      reason:'Îmbogățește solul cu azot.' },
+      { id:'marigold',  reason:'Protejează împotriva dăunătorilor.' },
+    ],
+    bad: [
+      { id:'potato',    reason:'Concurență pentru nutrienți.' },
+      { id:'cucumber',  reason:'Risc de boli comune.' },
+    ]
+  },
+  beet: {
+    good: [
+      { id:'onion',    reason:'Protejează împotriva dăunătorilor.' },
+      { id:'lettuce',   reason:'Utilizează eficient spațiul.' },
+      { id:'cabbage',  reason:'Compatibilitate bună.' },
+    ],
+    bad: [
+      { id:'bean',     reason:'Încetinește dezvoltarea sfeclei.' },
+      { id:'mustard',  reason:'Poate afecta creșterea.' },
+    ]
+  },
+  radish: {
+    good: [
+      { id:'spinach',  reason:'Creștere rapidă, fără competiție.' },
+    ],
+    bad: []
+  },
+  mustard: {
+    good: [],
+    bad: [
+      { id:'beet',     reason:'Poate afecta creșterea.' },
+    ]
+  },
+};
+
 const STORAGE_KEY = 'gradina_data_v1';
 const CUSTOM_PLANTS_KEY = 'custom_plants_v1';
 const DECOR_ITEMS_KEY = 'decor_items_v1';
+const GARDENS_KEY = 'gardens_data_v1';
 const MAX_HISTORY = 50;
+
+// Multi-garden support
+let gardensData = {}; // { gardenId: { name, gardenData, decorItems } }
+let currentGardenId = 'default';
+
+// Succession planting data
+const SUCCESSION_DEFAULTS = {
+  'Tomate': { interval:21, daysToHarvest:75, batches:4 },
+  'Castravete': { interval:21, daysToHarvest:55, batches:4 },
+  'Ardei': { interval:28, daysToHarvest:80, batches:3 },
+  'Cartof': { interval:28, daysToHarvest:90, batches:3 },
+  'Ceapă': { interval:21, daysToHarvest:100, batches:3 },
+  'Usturoi': { interval:180, daysToHarvest:240, batches:1 },
+  'Fasole': { interval:21, daysToHarvest:55, batches:5 },
+  'Mazăre': { interval:14, daysToHarvest:60, batches:4 },
+  'Varză': { interval:28, daysToHarvest:80, batches:3 },
+  'Salată': { interval:14, daysToHarvest:45, batches:6 },
+  'Spanac': { interval:14, daysToHarvest:40, batches:5 },
+  'Dovlecel': { interval:21, daysToHarvest:50, batches:4 },
+  'Sfeclă': { interval:21, daysToHarvest:60, batches:4 },
+  'Morcov': { interval:21, daysToHarvest:70, batches:4 },
+  'Porumb': { interval:14, daysToHarvest:80, batches:3 },
+  'Căpșuni': { interval:21, daysToHarvest:60, batches:3 },
+  'Busuioc': { interval:14, daysToHarvest:40, batches:5 },
+  'Gălbenele': { interval:21, daysToHarvest:50, batches:4 },
+  'Mărar': { interval:14, daysToHarvest:45, batches:5 },
+  'Pătrunjel': { interval:21, daysToHarvest:70, batches:4 },
+  'Ridichi': { interval:21, daysToHarvest:25, batches:5 },
+  'Muștar': { interval:14, daysToHarvest:30, batches:5 },
+};
+
+function generateSuccession(plantName, firstDate, intervalDays, daysToHarvest, numBatches, seasonEnd) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const batches = [];
+  for (let i = 0; i < numBatches; i++) {
+    const plant = addDays(firstDate, i * intervalDays);
+    if (seasonEnd && plant > seasonEnd) break;
+    const harvest = addDays(plant, daysToHarvest);
+    const dU = diffDays(today, plant);
+    const dUH = diffDays(today, harvest);
+    batches.push({ batch:i+1, plantDate:plant, harvestDate:harvest,
+      daysUntilPlant:dU, daysUntilHarvest:dUH,
+      status: dU>0?'programat': dUH>0?'în creștere':'recoltat' });
+  }
+  return batches;
+}
+
+function getNextActionMessage(plantName, batches) {
+  const next = batches.find(b => b.daysUntilPlant >= 0);
+  if (!next) return null;
+  if (next.daysUntilPlant === 0) return `Plantează un nou lot de ${plantName} azi!`;
+  if (next.daysUntilPlant === 1) return `Plantează un nou lot de ${plantName} mâine.`;
+  return `Plantează un nou lot de ${plantName} pe ${fmtDate(next.plantDate)} (în ${next.daysUntilPlant} zile)`;
+}
+
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function diffDays(a,b){ return Math.round((b-a)/86400000); }
+function fmtDate(d){ return d.toLocaleDateString('ro-RO',{day:'numeric',month:'long'}); }
+
+// Normalize diacritics for Romanian text matching
+function normalizeDiacritics(text) {
+  return text
+    .toLowerCase()
+    .replace(/ă/g, 'a')
+    .replace(/â/g, 'a')
+    .replace(/î/g, 'i')
+    .replace(/ș/g, 's')
+    .replace(/ț/g, 't')
+    .replace(/a/g, 'a') // ensure consistency
+    .replace(/i/g, 'i')
+    .replace(/s/g, 's')
+    .replace(/t/g, 't');
+}
+
+// ===== WEATHER WIDGET =====
+async function fetchWeather() {
+  try {
+    // Get user's location (Bucharest as default for Romania)
+    let lat = 44.4268;
+    let lon = 26.1025;
+    
+    // Check if location was already approved in this session
+    const savedLat = sessionStorage.getItem('location_lat');
+    const savedLon = sessionStorage.getItem('location_lon');
+    
+    if (savedLat && savedLon) {
+      // Use saved coordinates from this session without asking again
+      lat = parseFloat(savedLat);
+      lon = parseFloat(savedLon);
+      console.log('[fetchWeather] Using saved coordinates from session:', lat, lon);
+      updateWeatherWidget(lat, lon);
+      return;
+    }
+    
+    // Try to get user's location
+    if (navigator.geolocation) {
+      console.log('[fetchWeather] Requesting location permission');
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          lat = position.coords.latitude;
+          lon = position.coords.longitude;
+          console.log('[fetchWeather] Location approved, saving to session:', lat, lon);
+          // Save to sessionStorage for this session
+          sessionStorage.setItem('location_lat', lat.toString());
+          sessionStorage.setItem('location_lon', lon.toString());
+          updateWeatherWidget(lat, lon);
+        },
+        (error) => {
+          console.log('[fetchWeather] Location denied or failed:', error);
+          // Don't save anything, will use default coordinates
+          updateWeatherWidget(lat, lon);
+        }
+      );
+    } else {
+      updateWeatherWidget(lat, lon);
+    }
+  } catch (error) {
+    console.error('Weather fetch error:', error);
+  }
+}
+
+async function updateWeatherWidget(lat, lon) {
+  console.log('Fetching weather for:', lat, lon);
+  try {
+    // Using Open-Meteo API (free, no API key required)
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,precipitation_probability_max&timezone=auto`);
+    const data = await response.json();
+    console.log('Weather data received:', data);
+    
+    const current = data.current;
+    const daily = data.daily;
+    
+    const temp = Math.round(current.temperature_2m);
+    const humidity = current.relative_humidity_2m;
+    const weatherCode = current.weather_code;
+    
+    // Build 5-day forecast
+    const forecastHtml = daily.time.slice(0, 5).map((time, i) => {
+      const date = new Date(time);
+      const dayName = date.toLocaleDateString('ro-RO', { weekday: 'short' });
+      const dayDate = date.getDate();
+      const maxTemp = Math.round(daily.temperature_2m_max[i]);
+      const minTemp = Math.round(daily.temperature_2m_min[i]);
+      const precipProb = daily.precipitation_probability_max[i];
+      const precipSum = daily.precipitation_sum[i];
+      const dayIcon = getWeatherIcon(daily.weather_code[i]);
+      
+      return `
+        <div class="forecast-day">
+          <div class="forecast-day-name">${dayName}</div>
+          <div class="forecast-date">${dayDate}</div>
+          <div class="forecast-icon">${dayIcon}</div>
+          <div class="forecast-temp">${maxTemp}° / ${minTemp}°</div>
+          <div class="forecast-precip">${precipSum > 0 ? `💧 ${Math.round(precipSum)}mm` : ''}</div>
+        </div>
+      `;
+    }).join('');
+    
+    // Generate gardening advice
+    const advice = generateGardeningAdvice(daily, temp);
+    console.log('Gardening advice:', advice);
+    
+    const weatherWidget = document.getElementById('current-weather');
+    if (weatherWidget) {
+      weatherWidget.innerHTML = `
+        <div class="weather-widget-full">
+          <div class="weather-current">
+            <div class="weather-current-left">
+              <span class="weather-icon-large">${getWeatherIcon(weatherCode)}</span>
+              <div class="weather-temp-large">${temp}°C</div>
+              <div class="weather-desc">${getWeatherDescription(weatherCode)}</div>
+              <div class="weather-humidity">Umiditate: ${humidity}%</div>
+            </div>
+          </div>
+          
+          <div class="forecast-container">
+            ${forecastHtml}
+          </div>
+          
+          <div class="gardening-advice">
+            <h3 class="advice-title">🌱 Sfaturi pentru grădină</h3>
+            
+            ${advice.rainWarning ? `
+            <div class="advice-section rain-warning">
+              <div class="advice-header">🌧️ Ploaie în curând</div>
+              <div class="advice-text">${advice.rainWarning}</div>
+            </div>
+            ` : ''}
+            
+            <div class="advice-section">
+              <div class="advice-header">⚡ Decizii rapide</div>
+              <div class="advice-grid">
+                <div class="advice-item">
+                  <div class="advice-item-header">💧 Udare</div>
+                  <div class="advice-item-status ${advice.watering.status}">${advice.watering.status}</div>
+                  <div class="advice-item-reason">${advice.watering.reason}</div>
+                </div>
+                <div class="advice-item">
+                  <div class="advice-item-header">🛡️ Acoperire plante</div>
+                  <div class="advice-item-status ${advice.cover.status}">${advice.cover.status}</div>
+                  <div class="advice-item-reason">${advice.cover.reason}</div>
+                </div>
+                <div class="advice-item">
+                  <div class="advice-item-header">🌱 Plantare azi</div>
+                  <div class="advice-item-status ${advice.planting.status}">${advice.planting.status}</div>
+                  <div class="advice-item-reason">${advice.planting.reason}</div>
+                </div>
+                <div class="advice-item">
+                  <div class="advice-item-header">🌿 Fertilizare</div>
+                  <div class="advice-item-status ${advice.fertilizer.status}">${advice.fertilizer.status}</div>
+                  <div class="advice-item-reason">${advice.fertilizer.reason}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      console.log('Weather widget updated');
+    }
+  } catch (error) {
+    console.error('Weather update error:', error);
+    const weatherWidget = document.getElementById('current-weather');
+    if (weatherWidget) {
+      weatherWidget.innerHTML = '<span style="font-size:12px;color:#888;">Vreme indisponibilă</span>';
+    }
+  }
+}
+
+function generateGardeningAdvice(daily, currentTemp) {
+  const advice = {
+    rainWarning: '',
+    watering: { status: '', reason: '' },
+    cover: { status: '', reason: '' },
+    planting: { status: '', reason: '' },
+    fertilizer: { status: '', reason: '' }
+  };
+  
+  // Check for rain in next 3 days
+  let rainDays = [];
+  for (let i = 1; i <= 3; i++) {
+    if (daily.precipitation_sum[i] > 5) {
+      const date = new Date(daily.time[i]);
+      const dayName = date.toLocaleDateString('ro-RO', { weekday: 'long' });
+      rainDays.push(dayName);
+    }
+  }
+  
+  if (rainDays.length > 0) {
+    advice.rainWarning = `Precipitații probabile ${rainDays.join(' și ')}. Nu uda astăzi — lasă pământul să se usuce înainte.`;
+  }
+  
+  // Watering advice
+  if (rainDays.length > 0) {
+    advice.watering = { status: 'Amână', reason: 'Posibil ploaie în 3 zile' };
+  } else if (currentTemp > 25) {
+    advice.watering = { status: 'Udă moderat', reason: 'Temperatură ridicată' };
+  } else {
+    advice.watering = { status: 'Udă normal', reason: 'Condiții normale' };
+  }
+  
+  // Cover advice (check for low temps in next 3 nights)
+  let lowTempNight = false;
+  for (let i = 1; i <= 3; i++) {
+    if (daily.temperature_2m_min[i] <= 2) {
+      lowTempNight = true;
+      break;
+    }
+  }
+  
+  if (lowTempNight) {
+    advice.cover = { status: 'Atenție la noapte', reason: 'Temperaturi scăzute posibile' };
+  } else {
+    advice.cover = { status: 'Nu e necesar', reason: 'Temperaturi stabile' };
+  }
+  
+  // Planting advice
+  if (currentTemp >= 5 && currentTemp <= 25 && !rainDays.includes(0)) {
+    advice.planting = { status: 'Ok pentru afară', reason: 'Fără îngheț în 48h' };
+  } else if (currentTemp < 5) {
+    advice.planting = { status: 'Amână', reason: 'Temperatură prea scăzută' };
+  } else {
+    advice.planting = { status: 'Ok pentru afară', reason: 'Condiții acceptabile' };
+  }
+  
+  // Fertilizer advice
+  if (rainDays.length > 0) {
+    advice.fertilizer = { status: 'Amână 1–2 zile', reason: `Ploaie ${rainDays[0]} — spală nutrienții` };
+  } else if (currentTemp > 30) {
+    advice.fertilizer = { status: 'Amână', reason: 'Prea cald pentru fertilizare' };
+  } else {
+    advice.fertilizer = { status: 'Poți aplica', reason: 'Condiții ideale' };
+  }
+  
+  return advice;
+}
+
+function getWeatherIcon(code) {
+  const weatherIcons = {
+    0: '☀️', // Clear sky
+    1: '🌤️', // Mainly clear
+    2: '⛅', // Partly cloudy
+    3: '☁️', // Overcast
+    45: '🌫️', // Fog
+    48: '🌫️', // Depositing rime fog
+    51: '🌧️', // Light drizzle
+    53: '🌧️', // Moderate drizzle
+    55: '🌧️', // Dense drizzle
+    61: '🌧️', // Slight rain
+    63: '🌧️', // Moderate rain
+    65: '🌧️', // Heavy rain
+    66: '🌨️', // Freezing rain
+    67: '🌨️', // Heavy freezing rain
+    71: '🌨️', // Slight snow fall
+    73: '🌨️', // Moderate snow fall
+    75: '❄️', // Heavy snow fall
+    77: '🌨️', // Snow grains
+    80: '🌦️', // Slight rain showers
+    81: '🌦️', // Moderate rain showers
+    82: '🌦️', // Violent rain showers
+    85: '🌨️', // Slight snow showers
+    86: '🌨️', // Moderate snow showers
+    95: '⛈️', // Thunderstorm
+    96: '⛈️', // Thunderstorm with slight hail
+    99: '⛈️', // Thunderstorm with heavy hail
+  };
+  return weatherIcons[code] || '🌤️';
+}
+
+function getWeatherDescription(code) {
+  const descriptions = {
+    0: 'Cer senin',
+    1: 'Predominant senin',
+    2: 'Parțial noros',
+    3: 'Noros',
+    45: 'Ceață',
+    48: 'Ceață cu chiciură',
+    51: 'Burniță ușoară',
+    53: 'Burniță moderată',
+    55: 'Burniță densă',
+    61: 'Ploaie ușoară',
+    63: 'Ploaie moderată',
+    65: 'Ploaie torențială',
+    66: 'Ploaie înghețată',
+    67: 'Ploaie înghețată puternică',
+    71: 'Ninsoare ușoară',
+    73: 'Ninsoare moderată',
+    75: 'Ninsoare abundentă',
+    77: 'Grâu de zăpadă',
+    80: 'Averse ușoare',
+    81: 'Averse moderate',
+    82: 'Averse violente',
+    85: 'Averse de zăpadă ușoare',
+    86: 'Averse de zăpadă moderate',
+    95: 'Furtună',
+    96: 'Furtună cu grindină ușoară',
+    99: 'Furtună cu grindină abundentă',
+  };
+  return descriptions[code] || 'Variabil';
+}
+
+// Fetch weather on page load
+fetchWeather();
+
+function renderSuccessionPlan(plantName) {
+  const messageEl = document.getElementById('succession-message');
+  const batchesEl = document.getElementById('succession-batches');
+
+  // Parse plant name to handle multiple plants separated by +, &, ;, ,, și, or ȘI
+  // Replace full word "și" with a separator first to avoid matching individual characters
+  let normalized = plantName.replace(/\bsi\b/gi, '+');
+  const plantNames = normalized.split(/[+&;,]/).map(name => name.trim()).filter(name => name);
+
+  // If only one plant, use the original logic
+  if (plantNames.length === 1) {
+    const normalizedPlantName = normalizeDiacritics(plantName);
+    const defaults = SUCCESSION_DEFAULTS[plantName] || SUCCESSION_DEFAULTS[Object.keys(SUCCESSION_DEFAULTS).find(key => normalizeDiacritics(key) === normalizedPlantName)];
+    if (!defaults) {
+      messageEl.textContent = `Nu există date de plantare succesivă pentru ${plantName}.`;
+      batchesEl.innerHTML = '';
+      return;
+    }
+
+    const firstDate = new Date();
+    firstDate.setHours(0,0,0,0);
+    const currentYear = firstDate.getFullYear();
+    const seasonEnd = new Date(currentYear, 9, 31); // October 31 of current year
+
+    const batches = generateSuccession(plantName, firstDate, defaults.interval, defaults.daysToHarvest, defaults.batches, seasonEnd);
+    const nextAction = getNextActionMessage(plantName, batches);
+
+    if (nextAction) {
+      messageEl.textContent = nextAction;
+    } else {
+      messageEl.textContent = `Toate loturile pentru ${plantName} au fost programate.`;
+    }
+
+    batchesEl.innerHTML = batches.map(b => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:#fff;border-radius:6px;margin-bottom:4px;">
+        <div>
+          <span style="font-weight:700;color:#666;">Lot ${b.batch}</span>
+          <span style="margin-left:8px;color:#888;">Plantare: ${fmtDate(b.plantDate)}</span>
+          <span style="margin-left:8px;color:#888;">Recoltare: ${fmtDate(b.harvestDate)}</span>
+        </div>
+        <span class="status-pill ${b.status === 'programat' ? 'neplantat' : b.status === 'în creștere' ? 'plantat' : 'recoltat'}">${b.status}</span>
+      </div>
+    `).join('');
+  } else {
+    // Multiple plants - show succession plan for each
+    messageEl.textContent = `Plan de plantare succesivă pentru ${plantNames.length} plante:`;
+
+    const firstDate = new Date();
+    firstDate.setHours(0,0,0,0);
+    const currentYear = firstDate.getFullYear();
+    const seasonEnd = new Date(currentYear, 9, 31); // October 31 of current year
+
+    let allBatchesHtml = '';
+    plantNames.forEach(pName => {
+      const normalizedPName = normalizeDiacritics(pName);
+      const actualKey = Object.keys(SUCCESSION_DEFAULTS).find(key => normalizeDiacritics(key) === normalizedPName);
+      const defaults = SUCCESSION_DEFAULTS[pName] || SUCCESSION_DEFAULTS[actualKey];
+      const displayName = actualKey || pName;
+
+      if (!defaults) {
+        allBatchesHtml += `
+          <div style="margin-bottom:12px;background:#f5f5f5;border-radius:8px;padding:10px;">
+            <strong>${pName}</strong>
+            <div style="color:#999;font-style:italic;font-size:11px;">Nu există date de plantare succesivă.</div>
+          </div>
+        `;
+        return;
+      }
+
+      const batches = generateSuccession(displayName, firstDate, defaults.interval, defaults.daysToHarvest, defaults.batches, seasonEnd);
+      const nextAction = getNextActionMessage(displayName, batches);
+
+      allBatchesHtml += `
+        <div style="margin-bottom:12px;background:#f5f5f5;border-radius:8px;padding:10px;">
+          <strong>${pName}</strong>
+          ${nextAction ? `<div style="color:var(--green-deep);font-weight:600;font-size:11px;margin-bottom:4px;">${nextAction}</div>` : ''}
+          <div style="max-height:120px;overflow-y:auto;padding-right:4px;">
+            ${batches.map(b => `
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 6px;background:#fff;border-radius:4px;margin-bottom:2px;font-size:11px;">
+                <div>
+                  <span style="font-weight:600;color:#666;">Lot ${b.batch}</span>
+                  <span style="margin-left:6px;color:#888;">Plantare: ${fmtDate(b.plantDate)}</span>
+                  <span style="margin-left:6px;color:#888;">Recoltare: ${fmtDate(b.harvestDate)}</span>
+                </div>
+                <span class="status-pill ${b.status === 'programat' ? 'neplantat' : b.status === 'în creștere' ? 'plantat' : 'recoltat'}" style="font-size:10px;">${b.status}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    });
+
+    batchesEl.innerHTML = allBatchesHtml;
+  }
+}
 
 // Undo/redo history
 let historyStack = [];
@@ -1370,6 +2683,11 @@ function saveEmailToHistory(email) {
   }
   localStorage.setItem(EMAIL_HISTORY_KEY, JSON.stringify(emailHistory));
   loadEmailHistory();
+  
+  // Also save to Firestore if authenticated
+  if (currentUser) {
+    saveGardensData();
+  }
 }
 
 // Update edit button text based on user state
@@ -1394,6 +2712,246 @@ function updateEditButtonForExistingUser() {
     console.log('updateEditButtonForExistingUser called, button updated');
   } else {
     console.log('updateEditButtonForExistingUser: edit button not found');
+  }
+}
+
+// Garden modal functions
+function openGardenModal() {
+  document.getElementById('garden-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderGardenList();
+}
+
+function closeGardenModal() {
+  document.getElementById('garden-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderGardenList() {
+  const container = document.getElementById('garden-list');
+  const gardenIds = Object.keys(gardensData);
+  
+  if (gardenIds.length === 0) {
+    container.innerHTML = '<div style="color:#999;font-style:italic;">Nicio grădină creată încă</div>';
+    return;
+  }
+  
+  container.innerHTML = gardenIds.map(id => {
+    const garden = gardensData[id];
+    const isCurrent = id === currentGardenId;
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#f5f5f5;border-radius:8px;margin-bottom:8px;">
+        <div style="flex:1;">
+          <span style="font-weight:700;color:var(--green-deep);">${garden.name}</span>
+          ${isCurrent ? '<span style="margin-left:8px;font-size:11px;color:var(--accent-green);">(activă)</span>' : ''}
+        </div>
+        <div style="display:flex;gap:8px;">
+          ${!isCurrent ? `<button onclick="switchGarden('${id}')" style="background:var(--green-mid);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:700;">Selectează</button>` : ''}
+          <button onclick="deleteGarden('${id}')" style="background:#E74C3C;color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:700;">Șterge</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function createGarden() {
+  const nameInput = document.getElementById('new-garden-name');
+  const name = nameInput.value.trim();
+  
+  if (!name) {
+    showToast('⚠️ Introdu numele grădinii!');
+    return;
+  }
+  
+  const gardenId = 'garden_' + Date.now();
+  gardensData[gardenId] = {
+    name: name,
+    gardenData: {},
+    decorItems: []
+  };
+  
+  saveGardensData();
+  nameInput.value = '';
+  renderGardenList();
+  showToast('✅ Grădina creată!');
+}
+
+function deleteGarden(gardenId) {
+  if (Object.keys(gardensData).length <= 1) {
+    showToast('⚠️ Trebuie să ai cel puțin o grădină!');
+    return;
+  }
+  
+  if (!confirm('Ești sigur că vrei să ștergi această grădină? Toate datele vor fi pierdute.')) {
+    return;
+  }
+  
+  delete gardensData[gardenId];
+  
+  // If deleting current garden, switch to another
+  if (gardenId === currentGardenId) {
+    const remainingIds = Object.keys(gardensData);
+    currentGardenId = remainingIds[0];
+    localStorage.setItem('current_garden_id', currentGardenId);
+    loadCurrentGardenData();
+  }
+  
+  saveGardensData();
+  renderGardenList();
+  updateGardenSelector();
+  showToast('🗑️ Grădina ștearsă!');
+}
+
+function switchGarden(gardenId) {
+  if (gardenId === currentGardenId) return;
+  
+  // Save current garden data before switching
+  saveCurrentGardenData();
+  
+  currentGardenId = gardenId;
+  // Save currentGardenId to localStorage
+  localStorage.setItem('current_garden_id', currentGardenId);
+  loadCurrentGardenData();
+  updateGardenSelector();
+  closeGardenModal();
+  showToast(`✅ Schimbat la: ${gardensData[gardenId].name}`);
+}
+
+function loadCurrentGardenData() {
+  const garden = gardensData[currentGardenId];
+  if (garden) {
+    gardenData = garden.gardenData || {};
+    decorItems = garden.decorItems || [];
+    
+    // Clear all existing beds from DOM
+    const gardenInner = document.querySelector('.garden-inner');
+    if (gardenInner) {
+      const beds = gardenInner.querySelectorAll('.bed');
+      beds.forEach(bed => bed.remove());
+    }
+    
+    initBeds();
+    renderDecorItems();
+  }
+}
+
+function saveCurrentGardenData() {
+  if (gardensData[currentGardenId]) {
+    gardensData[currentGardenId].gardenData = gardenData;
+    gardensData[currentGardenId].decorItems = decorItems;
+    saveGardensData();
+  }
+}
+
+function saveGardensData() {
+  try {
+    localStorage.setItem(GARDENS_KEY, JSON.stringify(gardensData));
+    localStorage.setItem('current_garden_id', currentGardenId);
+  } catch(e) {
+    console.error('Error saving gardens data:', e);
+  }
+  
+  // Also save current garden to Firestore if authenticated
+  if (currentUser) {
+    try {
+      const customPlants = JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]');
+      const emailHistory = JSON.parse(localStorage.getItem(EMAIL_HISTORY_KEY) || '[]');
+      db.collection('gardens').doc(currentUser.uid).set({
+        gardensData: gardensData,
+        currentGardenId: currentGardenId,
+        customPlants: customPlants,
+        emailHistory: emailHistory,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } catch(error) {
+      console.error('Error saving gardens to Firestore:', error);
+    }
+  }
+}
+
+function loadGardensData() {
+  // Try localStorage first
+  try {
+    const localRaw = localStorage.getItem(GARDENS_KEY);
+    if (localRaw) {
+      gardensData = JSON.parse(localRaw);
+      // Load currentGardenId from localStorage
+      const savedCurrentId = localStorage.getItem('current_garden_id');
+      if (savedCurrentId && gardensData[savedCurrentId]) {
+        currentGardenId = savedCurrentId;
+      } else {
+        // If saved ID doesn't exist, use first available garden
+        const gardenIds = Object.keys(gardensData);
+        if (gardenIds.length > 0) {
+          currentGardenId = gardenIds[0];
+          localStorage.setItem('current_garden_id', currentGardenId);
+        }
+      }
+      return;
+    }
+  } catch(e) {}
+  
+  // If no local data, migrate from old single-garden format
+  try {
+    const oldDataRaw = localStorage.getItem(STORAGE_KEY);
+    if (oldDataRaw) {
+      const oldGardenData = JSON.parse(oldDataRaw);
+      gardensData = {
+        'default': {
+          name: 'Grădina principală',
+          gardenData: oldGardenData,
+          decorItems: JSON.parse(localStorage.getItem(DECOR_ITEMS_KEY) || '[]')
+        }
+      };
+      currentGardenId = 'default';
+      saveGardensData();
+      // Migrate to Firestore if authenticated
+      if (currentUser) {
+        saveGardensData();
+      }
+    }
+  } catch(e) {
+    console.error('Error migrating old data:', e);
+  }
+  
+  // If still no data, create default garden
+  if (Object.keys(gardensData).length === 0) {
+    gardensData = {
+      'default': {
+        name: 'Grădina principală',
+        gardenData: {},
+        decorItems: []
+      }
+    };
+    currentGardenId = 'default';
+    saveGardensData();
+  }
+}
+
+function updateGardenSelector() {
+  const selector = document.getElementById('garden-selector');
+  if (!selector) return;
+
+  selector.innerHTML = Object.entries(gardensData).map(([id, garden]) => {
+    return `<option value="${id}" ${id === currentGardenId ? 'selected' : ''}>${garden.name}</option>`;
+  }).join('');
+  
+  // Update calendar filter
+  const calendarFilter = document.getElementById('calendar-garden-filter');
+  if (calendarFilter) {
+    calendarFilter.innerHTML = '<option value="all">Toate grădinile</option>' + 
+      Object.entries(gardensData).map(([id, garden]) => {
+        return `<option value="${id}">${garden.name}</option>`;
+      }).join('');
+  }
+  
+  // Update progress filter
+  const progressFilter = document.getElementById('progress-garden-filter');
+  if (progressFilter) {
+    progressFilter.innerHTML = '<option value="all">Toate grădinile</option>' + 
+      Object.entries(gardensData).map(([id, garden]) => {
+        return `<option value="${id}">${garden.name}</option>`;
+      }).join('');
   }
 }
 
@@ -1586,75 +3144,26 @@ async function saveDecorData() {
   try {
     console.log('Saving decor items to Firestore:', decorItems);
     await db.collection('gardens').doc(currentUser.uid).set({
-      decorItems: decorItems
+      gardensData: gardensData,
+      currentGardenId: currentGardenId,
+      lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     console.log('Decor data saved to Firestore successfully');
     
     // Also save to localStorage as backup
-    localStorage.setItem(DECOR_ITEMS_KEY, JSON.stringify(decorItems));
+    saveGardensData();
   } catch (error) {
     console.error('Error saving decor data:', error);
     // Still save to localStorage even if Firestore fails
-    localStorage.setItem(DECOR_ITEMS_KEY, JSON.stringify(decorItems));
+    saveGardensData();
   }
 }
 
 // Load decor data from Firestore
 async function loadDecorData() {
-  if (!currentUser) {
-    console.log('loadDecorData: No current user');
-    return;
-  }
-  
-  console.log('loadDecorData: Loading decor data for user', currentUser.uid);
-  
-  try {
-    const doc = await db.collection('gardens').doc(currentUser.uid).get();
-    console.log('loadDecorData: Document exists?', doc.exists);
-    
-    if (doc.exists) {
-      const data = doc.data();
-      console.log('loadDecorData: Document data keys:', Object.keys(data));
-      
-      if (data.decorItems) {
-        decorItems = data.decorItems;
-        console.log('Decor items loaded from Firestore:', decorItems);
-        localStorage.setItem(DECOR_ITEMS_KEY, JSON.stringify(decorItems));
-        renderDecorItems();
-      } else {
-        console.log('No decor items found in Firestore document, checking localStorage...');
-        // Try loading from localStorage as backup
-        const localDecor = JSON.parse(localStorage.getItem(DECOR_ITEMS_KEY) || '[]');
-        if (localDecor.length > 0) {
-          decorItems = localDecor;
-          console.log('Decor items loaded from localStorage:', decorItems);
-          renderDecorItems();
-        } else {
-          console.log('No decor items in localStorage either');
-        }
-      }
-    } else {
-      console.log('Document does not exist yet, checking localStorage...');
-      // Try loading from localStorage as backup
-      const localDecor = JSON.parse(localStorage.getItem(DECOR_ITEMS_KEY) || '[]');
-      if (localDecor.length > 0) {
-        decorItems = localDecor;
-        console.log('Decor items loaded from localStorage:', decorItems);
-        renderDecorItems();
-      } else {
-        console.log('No decor items in localStorage');
-      }
-    }
-  } catch (error) {
-    console.error('Error loading decor data:', error);
-    // Try loading from localStorage as backup
-    const localDecor = JSON.parse(localStorage.getItem(DECOR_ITEMS_KEY) || '[]');
-    if (localDecor.length > 0) {
-      decorItems = localDecor;
-      console.log('Decor items loaded from localStorage (error fallback):', decorItems);
-      renderDecorItems();
-    }
-  }
+  // Decor items are now loaded as part of loadCurrentGardenData
+  // This function is kept for compatibility but does nothing
+  console.log('loadDecorData: Decor items loaded via loadCurrentGardenData');
 }
 
 // Render decor items in garden
@@ -1756,9 +3265,13 @@ async function initializeFirebase() {
           console.log('Edit button not found');
         }
         
-        // Load data from Firestore for this user
-        const result = await loadFromFirestore();
-        gardenData = result.gardenData;
+        // Load data from Firestore for this user (only if not already loaded from localStorage)
+        if (Object.keys(gardensData).length === 0) {
+          const result = await loadFromFirestore();
+        } else {
+          // Data already loaded from localStorage, just sync to Firestore
+          saveGardensData();
+        }
         
         // Check if user is new (empty gardenData)
         isNewUser = Object.keys(gardenData).length === 0;
@@ -1821,21 +3334,13 @@ async function initializeFirebase() {
 
 // Load data from Firestore (with localStorage fallback)
 async function loadData() {
-  // If user is authenticated, load from Firestore (source of truth)
-  if (currentUser) {
-    const result = await loadFromFirestore();
-    return result.gardenData;
-  }
+  // Load gardens data first
+  loadGardensData();
   
-  // If no user, try localStorage as fallback
-  try {
-    const localRaw = localStorage.getItem(STORAGE_KEY);
-    if (localRaw) {
-      return JSON.parse(localRaw);
-    }
-  } catch(e) {}
+  // Load current garden data
+  loadCurrentGardenData();
   
-  return {};
+  return gardenData;
 }
 
 // Load from Firestore
@@ -1858,17 +3363,59 @@ async function loadFromFirestore() {
     if (doc.exists) {
       const data = doc.data();
       console.log('[loadFromFirestore] Document exists, data keys:', Object.keys(data));
-      // Save to localStorage as backup
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.gardenData));
+      
+      // Load gardens data if available
+      if (data.gardensData) {
+        // Check if localStorage has more recent data
+        const localRaw = localStorage.getItem(GARDENS_KEY);
+        if (localRaw) {
+          const localGardensData = JSON.parse(localRaw);
+          const localTimestamp = new Date(doc.data().lastUpdated?.toDate?.() || 0).getTime();
+          const firestoreTimestamp = new Date(doc.data().lastUpdated?.toDate?.() || 0).getTime();
+          
+          // Use localStorage data if it exists (prioritize local for current session)
+          gardensData = localGardensData;
+        } else {
+          gardensData = data.gardensData;
+          localStorage.setItem(GARDENS_KEY, JSON.stringify(gardensData));
+        }
+        
+        if (data.currentGardenId && gardensData[data.currentGardenId]) {
+          currentGardenId = data.currentGardenId;
+        }
+        // Load currentGardenId from localStorage as fallback
+        const savedCurrentId = localStorage.getItem('current_garden_id');
+        if (savedCurrentId && gardensData[savedCurrentId]) {
+          currentGardenId = savedCurrentId;
+        }
+        localStorage.setItem('current_garden_id', currentGardenId);
+      }
+      
+      // Load custom plants
       if (data.customPlants) {
         localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(data.customPlants));
       }
-      // Count only plants that have beds in the garden-inner (same as progress section)
-      const plantCount = Object.keys(PLANTS).filter(id => document.querySelector(`[data-id="${id}"]`)).length;
+      
+      // Load email history
+      if (data.emailHistory) {
+        localStorage.setItem(EMAIL_HISTORY_KEY, JSON.stringify(data.emailHistory));
+      }
+      
+      // Count plants from all gardens
+      let totalPlantCount = 0;
+      Object.values(gardensData).forEach(garden => {
+        if (garden.gardenData) {
+          totalPlantCount += Object.keys(garden.gardenData).length;
+        }
+      });
       const timestamp = new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
-      updateSyncStatus(`✓ Sincronizat la ${timestamp} • ${plantCount} plante`);
-      console.log('[loadFromFirestore] Data loaded successfully, plant count:', plantCount);
-      return { gardenData: data.gardenData || {}, customPlants: data.customPlants || [] };
+      updateSyncStatus(`✓ Sincronizat la ${timestamp} • ${totalPlantCount} plante`);
+      console.log('[loadFromFirestore] Data loaded successfully, total plant count:', totalPlantCount);
+      
+      // Load current garden data
+      loadCurrentGardenData();
+      
+      return { gardenData: gardenData, customPlants: data.customPlants || [] };
     } else {
       console.log('[loadFromFirestore] Document does not exist for user');
     }
@@ -1888,36 +3435,9 @@ async function loadFromFirestore() {
 // Save data to Firestore (and localStorage as backup)
 async function saveData(data) {
   console.log('[saveData] Starting save to Firestore, data keys:', Object.keys(data));
-  // Always save to localStorage first for instant feedback
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    console.log('[saveData] Saved to localStorage');
-  } catch(e) {
-    console.error('[saveData] Error saving to localStorage:', e);
-  }
-
-  // Then save to Firestore
-  if (currentUser) {
-    try {
-      console.log('[saveData] Saving to Firestore for user:', currentUser.uid);
-      const customPlants = JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]');
-      await db.collection('gardens').doc(currentUser.uid).set({
-        gardenData: data,
-        customPlants: customPlants,
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      // Count only plants that have beds in the garden-inner (same as progress section)
-      const plantCount = Object.keys(PLANTS).filter(id => document.querySelector(`[data-id="${id}"]`)).length;
-      const timestamp = new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
-      updateSyncStatus(`✓ Sincronizat la ${timestamp} • ${plantCount} plante`);
-      console.log('[saveData] Successfully saved to Firestore, plant count:', plantCount);
-    } catch (error) {
-      console.error('[saveData] Error saving to Firestore:', error);
-      updateSyncStatus('⚠️ Eroare salvare');
-    }
-  } else {
-    console.log('[saveData] No current user, skipping Firestore save');
-  }
+  
+  // Save to current garden in gardensData
+  saveCurrentGardenData();
 }
 
 let gardenData = {};
@@ -2150,11 +3670,7 @@ function openModal(id) {
   // Reset harvest inputs
   document.getElementById('modal-harvest-date').value = '';
   document.getElementById('modal-harvest-quantity').value = '';
-  
-  // Reset succession inputs
-  document.getElementById('modal-succession-date').value = '';
-  document.getElementById('modal-succession-interval').value = '';
-  
+
   // Reset modal title input
   document.getElementById('modal-title-input').value = data.name || plant.name;
   document.getElementById('modal-title-input').style.display = 'none';
@@ -2188,6 +3704,9 @@ function openModal(id) {
   } else {
     histSection.style.display = 'none';
   }
+
+  // Render succession plan
+  renderSuccessionPlan(data.name || plant.name);
 
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -2347,89 +3866,6 @@ function removeHarvestEntry(index) {
   }
 }
 
-function addSuccessionEntry() {
-  if (!currentId) return;
-  const successionDate = document.getElementById('modal-succession-date').value;
-  const successionInterval = document.getElementById('modal-succession-interval').value;
-  
-  if (!successionDate || !successionInterval) {
-    showToast('⚠️ Data și intervalul sunt obligatorii!');
-    return;
-  }
-  
-  const existing = getData(currentId);
-  const succession = existing.succession || [];
-  succession.push({ date: successionDate, interval: parseInt(successionInterval), completed: false });
-  gardenData[currentId] = { ...existing, succession };
-  saveData(gardenData);
-  
-  // Reset inputs
-  document.getElementById('modal-succession-date').value = '';
-  document.getElementById('modal-succession-interval').value = '';
-  
-  // Refresh succession list
-  renderSuccessionList(succession);
-  showToast('✅ Plantare succesivă adăugată!');
-}
-
-function renderSuccessionList(succession) {
-  const container = document.getElementById('succession-list');
-  if (!succession || succession.length === 0) {
-    container.innerHTML = '<div style="color:#999;font-style:italic;">Nicio plantare succesivă programată</div>';
-    return;
-  }
-  
-  const today = new Date().toISOString().split('T')[0];
-  container.innerHTML = succession.map((s, index) => {
-    const isOverdue = s.date < today && !s.completed;
-    const isUpcoming = s.date >= today && !s.completed;
-    const statusStyle = s.completed ? 'color:#27AE60;' : (isOverdue ? 'color:#E74C3C;font-weight:700;' : (isUpcoming ? 'color:#3498DB;' : 'color:#999;'));
-    const statusText = s.completed ? '✓ Completat' : (isOverdue ? '⚠️ Întârziat' : (isUpcoming ? '📅 Programat' : 'Trecut'));
-    
-    return `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px;background:${s.completed ? '#e8f5e9' : (isOverdue ? '#ffebee' : (isUpcoming ? '#e3f2fd' : '#f5f5f5'))};border-radius:4px;margin-bottom:4px;">
-      <div>
-        <span style="font-weight:700;">${s.date}</span>
-        <span>: la fiecare ${s.interval} zile</span>
-        <span style="${statusStyle}margin-left:8px;font-size:10px;">${statusText}</span>
-      </div>
-      <div style="display:flex;gap:8px;">
-        ${!s.completed ? `<span onclick="markSuccessionCompleted(${index})" style="cursor:pointer;color:#27AE60;font-size:14px;" title="Marchează ca completat">✓</span>` : ''}
-        <span onclick="removeSuccessionEntry(${index})" style="cursor:pointer;color:#C0392B;font-size:16px;" title="Șterge">✕</span>
-      </div>
-    </div>
-  `;
-  }).join('');
-}
-
-function markSuccessionCompleted(index) {
-  if (!currentId) return;
-  const existing = getData(currentId);
-  const succession = existing.succession || [];
-  
-  if (index >= 0 && index < succession.length) {
-    succession[index].completed = true;
-    gardenData[currentId] = { ...existing, succession };
-    saveData(gardenData);
-    renderSuccessionList(succession);
-    showToast('✅ Plantare marcată ca completată!');
-  }
-}
-
-function removeSuccessionEntry(index) {
-  if (!currentId) return;
-  const existing = getData(currentId);
-  const succession = existing.succession || [];
-  
-  if (index >= 0 && index < succession.length) {
-    succession.splice(index, 1);
-    gardenData[currentId] = { ...existing, succession };
-    saveData(gardenData);
-    renderSuccessionList(succession);
-    showToast('🗑️ Plantare succesivă ștearsă');
-  }
-}
-
 function removeHistoryItem(index) {
   if (!currentId) return;
   const existing = getData(currentId);
@@ -2474,6 +3910,10 @@ function deletePlant() {
   if (customIndex !== -1) {
     customPlants.splice(customIndex, 1);
     localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(customPlants));
+    // Also save to Firestore if authenticated
+    if (currentUser) {
+      saveGardensData();
+    }
     // Also remove from PLANTS object
     delete PLANTS[currentId];
   }
@@ -2812,6 +4252,11 @@ function saveCustomPlant() {
   const newPlant = { id, name, emoji, type, period, obs };
   customPlants.push(newPlant);
   localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(customPlants));
+  
+  // Also save to Firestore if authenticated
+  if (currentUser) {
+    saveGardensData();
+  }
   
   // Add to PLANTS
   PLANTS[id] = { name, emoji, type, period, obs };
@@ -3252,6 +4697,10 @@ function renderCalendar() {
   const container = document.getElementById('calendar-list');
   const season = getCurrentSeason();
   
+  // Get selected garden filter
+  const calendarFilter = document.getElementById('calendar-garden-filter');
+  const selectedGardenId = calendarFilter ? calendarFilter.value : 'all';
+  
   // Add season indicator at top of calendar
   const seasonIndicator = document.getElementById('season-indicator') || document.createElement('div');
   seasonIndicator.id = 'season-indicator';
@@ -3268,15 +4717,32 @@ function renderCalendar() {
     calendarContainer.replaceChild(seasonIndicator, calendarContainer.querySelector('#season-indicator'));
   }
   
+  // Aggregate data from all gardens based on filter
+  let allPlants = [];
+  Object.entries(gardensData).forEach(([gardenId, garden]) => {
+    if (selectedGardenId !== 'all' && gardenId !== selectedGardenId) return;
+    
+    Object.entries(garden.gardenData || {}).forEach(([plantId, data]) => {
+      const plant = PLANTS[plantId];
+      if (plant) {
+        allPlants.push({
+          id: plantId,
+          data: data,
+          plant: plant,
+          gardenName: garden.name,
+          gardenId: gardenId
+        });
+      }
+    });
+  });
+  
   // Add succession planting reminder section
   const today = new Date().toISOString().split('T')[0];
   const upcomingSuccession = [];
-  Object.keys(gardenData).forEach(id => {
-    const succession = gardenData[id].succession || [];
+  allPlants.forEach(({ id, data, plant }) => {
+    const succession = data.succession || [];
     succession.forEach(s => {
       if (s.date >= today && !s.completed) {
-        const plant = PLANTS[id];
-        const data = getData(id);
         upcomingSuccession.push({
           plant: data.name || plant.name,
           emoji: data.emoji || plant.emoji,
@@ -3315,13 +4781,7 @@ function renderCalendar() {
     }
   }
   
-  // Only show plants that have beds in garden-inner
-  const plantsInGarden = Object.entries(PLANTS).filter(([id]) => {
-    return document.querySelector(`[data-id="${id}"]`);
-  });
-  
-  container.innerHTML = plantsInGarden.map(([id, plant]) => {
-    const data = getData(id);
+  container.innerHTML = allPlants.map(({ id, data, plant, gardenName }) => {
     const statusClass = data.status || 'neplantat';
     const statusLabels = { neplantat:'Neplantat', plantat:'Plantat', incoltat:'Încolțit', recoltat:'Recoltat', perena:'Planta Perena', problema:'Problemă' };
     const statusIcons = { neplantat:'⬜', plantat:'🌱', incoltat:'🌿', recoltat:'🧺', perena:'🌸', problema:'⚠️' };
@@ -3331,12 +4791,16 @@ function renderCalendar() {
     const isInSeason = isPlantingSeason(plant.period);
     const seasonBorder = isInSeason ? '2px solid ' + season.color : 'none';
     const seasonBadge = isInSeason ? `<div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);background:${season.color};padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;z-index:10;">🌱 În sezon</div>` : '';
+    const gardenLabel = selectedGardenId === 'all' ? `<div style="font-size:10px;color:#fff;margin-bottom:4px;">🌿 ${gardenName}</div>` : '';
     
     return `
       <div class="calendar-card" style="border:${seasonBorder};position:relative;">
         ${seasonBadge}
         <div class="calendar-card-header">
-          <div class="plant-name">${displayEmoji} ${displayName}</div>
+          <div>
+            ${gardenLabel}
+            <div class="plant-name">${displayEmoji} ${displayName}</div>
+          </div>
           <div class="status-pill ${statusClass}">${statusIcons[statusClass]} ${statusLabels[statusClass]}</div>
         </div>
         <div class="calendar-card-body">
@@ -3373,12 +4837,32 @@ function renderCalendar() {
 
 // ============ PROGRESS ============
 function renderProgress() {
-  // Count plants that have beds in the garden-inner
-  const allIds = Object.keys(PLANTS);
-  const ids = Object.keys(PLANTS).filter(id => document.querySelector(`[data-id="${id}"]`));
+  // Get selected garden filter
+  const progressFilter = document.getElementById('progress-garden-filter');
+  const selectedGardenId = progressFilter ? progressFilter.value : 'all';
+  
+  // Aggregate data from all gardens based on filter
+  let allPlants = [];
+  Object.entries(gardensData).forEach(([gardenId, garden]) => {
+    if (selectedGardenId !== 'all' && gardenId !== selectedGardenId) return;
+    
+    Object.entries(garden.gardenData || {}).forEach(([plantId, data]) => {
+      const plant = PLANTS[plantId];
+      if (plant) {
+        allPlants.push({
+          id: plantId,
+          data: data,
+          plant: plant,
+          gardenName: garden.name,
+          gardenId: gardenId
+        });
+      }
+    });
+  });
+  
   let planted = 0, harvested = 0, sprouted = 0, perena = 0, problems = 0, totalHarvestQty = 0, neplantat = 0;
-  allIds.forEach(id => {
-    const s = getData(id).status;
+  allPlants.forEach(({ data }) => {
+    const s = data.status;
     if (s === 'plantat') planted++;
     if (s === 'recoltat') harvested++;
     if (s === 'incoltat') sprouted++;
@@ -3387,13 +4871,14 @@ function renderProgress() {
     if (s === 'neplantat') neplantat++;
     
     // Count total harvest quantity
-    const harvest = getData(id).harvest || [];
+    const harvest = data.harvest || [];
     harvest.forEach(h => {
       const qty = parseFloat(h.quantity) || 0;
       totalHarvestQty += qty;
     });
   });
-  const total = ids.length;
+  
+  const total = allPlants.length;
   const pct = total ? Math.round((planted+harvested+sprouted+perena) / total * 100) : 0;
 
   document.getElementById('main-progress').style.width = pct + '%';
@@ -3418,8 +4903,8 @@ function renderProgress() {
       <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🔄</span><span class="progress-plant-name">Plantări succesive</span><strong style="color:#3498DB">${(() => {
         const today = new Date().toISOString().split('T')[0];
         let count = 0;
-        allIds.forEach(id => {
-          const succession = getData(id).succession || [];
+        allPlants.forEach(({ data }) => {
+          const succession = data.succession || [];
           succession.forEach(s => {
             if (s.date >= today && !s.completed) count++;
           });
@@ -3435,7 +4920,7 @@ function renderProgress() {
       <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🌿</span><span class="progress-plant-name">Încolțite</span><strong style="color:var(--accent-yellow)">${sprouted}</strong></div></div>
       <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🧺</span><span class="progress-plant-name">Recoltate</span><strong style="color:var(--accent-blue)">${harvested}</strong></div></div>
       <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">📦</span><span class="progress-plant-name">Total Recoltat</span><strong style="color:var(--accent-green)">${totalHarvestQty} kg</strong></div></div>
-      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">💧</span><span class="progress-plant-name">Necesită udare</span><strong style="color:#3498DB">${ids.filter(id => needsWatering(getData(id).wateringDate)).length}</strong></div></div>
+      <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">💧</span><span class="progress-plant-name">Necesită udare</span><strong style="color:#3498DB">${allPlants.filter(({ data }) => needsWatering(data.wateringDate)).length}</strong></div></div>
       <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">🌸</span><span class="progress-plant-name">Planta Perena</span><strong style="color:#E91E63">${perena}</strong></div></div>
       <div class="progress-card" style="margin:0;"><div class="progress-plant-row"><span style="font-size:20px">⚠️</span><span class="progress-plant-name">Uscate</span><strong style="color:var(--accent-red)">${problems}</strong></div></div>
     </div>
@@ -3474,12 +4959,10 @@ function renderProgress() {
         const today = new Date();
         const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         const urgentSuccession = [];
-        allIds.forEach(id => {
-          const succession = getData(id).succession || [];
+        allPlants.forEach(({ data, plant }) => {
+          const succession = data.succession || [];
           succession.forEach(s => {
             if (s.date >= today.toISOString().split('T')[0] && s.date <= nextWeek && !s.completed) {
-              const plant = PLANTS[id];
-              const data = getData(id);
               urgentSuccession.push({
                 plant: data.name || plant.name,
                 emoji: data.emoji || plant.emoji,
@@ -3499,29 +4982,6 @@ function renderProgress() {
           </div>
         `).join('');
       })()}
-    </div>
-    <div class="progress-card">
-      <div class="field-label">Detalii per plantă</div>
-      ${ids.map(id => {
-        const plant = PLANTS[id];
-        const d = getData(id);
-        const displayEmoji = d.emoji || plant.emoji;
-        const displayName = d.name || plant.name;
-        const statusColors = { neplantat:'#ccc', plantat:'var(--green-light)', incoltat:'var(--accent-yellow)', recoltat:'var(--accent-blue)', perena:'#E91E63', problema:'var(--accent-red)' };
-        const statusPct = { neplantat:0, plantat:33, incoltat:66, recoltat:100, perena:50, problema:15 };
-        const harvest = d.harvest || [];
-        const lastHarvest = harvest.length > 0 ? harvest[harvest.length - 1].quantity : '-';
-        return `
-          <div class="progress-plant-row" style="margin-top:10px;">
-            <span style="font-size:18px">${displayEmoji}</span>
-            <span class="progress-plant-name" style="font-size:12px;">${displayName}</span>
-            <span style="font-size:10px;color:#666;margin-left:auto;">📦 ${lastHarvest}</span>
-          </div>
-          <div class="progress-wrap">
-            <div class="progress-fill" style="width:${statusPct[d.status||'neplantat']}%; background:${statusColors[d.status||'neplantat']};"></div>
-          </div>
-        `;
-      }).join('')}
     </div>
   `;
 }
@@ -3662,7 +5122,7 @@ function toggleEditMode() {
   
   if (editMode) {
     console.log('[toggleEditMode] Entering edit mode');
-    editBtn.textContent = '✏️ Editare activă';
+    editBtn.textContent = '✏️ Editează';
     editBtn.style.background = '#E67E22';
     editControls.style.display = 'flex';
     addPlantBtn.classList.remove('hidden');
@@ -3723,7 +5183,7 @@ function saveEditMode() {
   const addPlantBtn = document.getElementById('add-plant-btn');
   const addDecorBtn = document.getElementById('add-decor-btn');
   
-  editBtn.textContent = '✏️ Editează Grădina';
+  editBtn.textContent = '✏️ Editează';
   editBtn.style.background = '#FF9800';
   editControls.style.display = 'none';
   addPlantBtn.classList.add('hidden');
@@ -3738,17 +5198,16 @@ function saveEditMode() {
   // Re-render decor items to hide delete buttons
   renderDecorItems();
   
-  // Save to both localStorage and Firebase
-  saveData(gardenData);
-  saveDecorData(); // Save decor changes
-  gardenDataBeforeEdit = null;
-  decorItemsBeforeEdit = null;
-  plantsAddedDuringEdit = [];
-  
   // Hide resize handles
   document.querySelectorAll('.resize-handle').forEach(handle => {
     handle.style.display = 'none';
   });
+  
+  saveCurrentGardenData();
+  saveDecorData(); // Save decor changes
+  gardenDataBeforeEdit = null;
+  decorItemsBeforeEdit = null;
+  plantsAddedDuringEdit = [];
   
   showToast('✅ Modificări salvate!');
 }
@@ -3760,7 +5219,7 @@ function cancelEditMode() {
   const addPlantBtn = document.getElementById('add-plant-btn');
   const addDecorBtn = document.getElementById('add-decor-btn');
   
-  editBtn.textContent = '✏️ Editează Grădina';
+  editBtn.textContent = '✏️ Editează';
   editBtn.style.background = '#FF9800';
   editControls.style.display = 'none';
   addPlantBtn.classList.add('hidden');
@@ -3846,82 +5305,28 @@ function displayCurrentDate() {
   }
 }
 
-// Fetch and display current weather for Platonesti, Harghita, Romania
-async function fetchWeather() {
-  const weatherElement = document.getElementById('current-weather');
-  if (!weatherElement) return;
-
-  try {
-    // Platonesti coordinates: 46.916794°N, 25.426088°E
-    const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=46.916794&longitude=25.426088&current=temperature_2m,weather_code');
-    const data = await response.json();
-
-    if (data.current) {
-      const temp = Math.round(data.current.temperature_2m);
-      const weatherCode = data.current.weather_code;
-      const weatherIcon = getWeatherIcon(weatherCode);
-      
-      let weatherText = `${weatherIcon} ${temp}°C`;
-      let wateringAdvice = getWateringAdvice(temp);
-      
-      // Check for frost warning (below 2°C)
-      if (temp <= 2) {
-        weatherText += ' ⚠️ Îngheț!';
-        weatherElement.style.color = '#00BFFF'; // Light blue for frost warning
-      }
-      // Check for extreme heat warning (above 30°C)
-      else if (temp >= 30) {
-        weatherText += ' ⚠️ Căldură extremă!';
-        weatherElement.style.color = '#FF4500'; // Orange-red for heat warning
-      }
-      else {
-        weatherElement.style.color = ''; // Reset to default
-      }
-      
-      weatherText += ` | 💧 ${wateringAdvice}`;
-      weatherElement.textContent = weatherText;
-    }
-  } catch (error) {
-    console.error('Error fetching weather:', error);
-    weatherElement.textContent = '🌡️ --°C';
-  }
-}
-
-function getWateringAdvice(temp) {
-  if (temp <= 2) return 'Nu uda (risc de îngheț)';
-  if (temp <= 10) return 'Udare redusă';
-  if (temp <= 20) return 'Udare normală';
-  if (temp <= 28) return 'Udare zilnică';
-  return 'Udare de 2x pe zi';
-}
-
-function getWeatherIcon(code) {
-  // WMO weather codes
-  if (code === 0) return '☀️'; // Clear
-  if (code >= 1 && code <= 3) return '⛅'; // Partly cloudy
-  if (code >= 45 && code <= 48) return '🌫️'; // Fog
-  if (code >= 51 && code <= 67) return '🌧️'; // Rain
-  if (code >= 71 && code <= 77) return '❄️'; // Snow
-  if (code >= 80 && code <= 99) return '⛈️'; // Thunderstorm
-  return '🌤️'; // Default
-}
-
 // Initialize Firebase and load data
 async function initializeApp() {
   // Import from URL FIRST, before loading anything else
   importFromUrl();
 
+  // Load gardens data first (from localStorage)
+  loadGardensData();
+
+  // Load current garden data
+  loadCurrentGardenData();
+
   // Initialize Firebase (this handles auth state changes internally)
   initializeFirebase();
-
-  // Load data from localStorage first for instant load
-  gardenData = await loadData();
 
   // Initialize the rest of the app
   loadCustomPlants();
   initBeds();
   displayCurrentDate();
   fetchWeather();
+  
+  // Initialize garden selector
+  updateGardenSelector();
 }
 
 // Start the app
@@ -3939,6 +5344,264 @@ initializeApp();
 //       });
 //   });
 // }
+
+// ============ COMPANION PLANTING ============
+const COMPAT_COLS = 8, COMPAT_ROWS = 6;
+let compatGrid = Array(COMPAT_ROWS).fill(null).map(() => Array(COMPAT_COLS).fill(null));
+let compatSelectedPlant = null;
+let compatSelectedCell = null;
+let compatActivePaletteId = null;
+
+const COMPAT_PLANTMAP = Object.fromEntries(COMPANION_PLANTS.map(p => [p.id, p]));
+
+function getCompat(plantId) {
+  return COMPAT[plantId] || { good: [], bad: [] };
+}
+
+function getMutualCompat(aId, bId) {
+  const ac = getCompat(aId);
+  const bc = getCompat(bId);
+  const aGoodB = ac.good.find(x => x.id === bId);
+  const aBadB = ac.bad.find(x => x.id === bId);
+  const bGoodA = bc.good.find(x => x.id === aId);
+  const bBadA = bc.bad.find(x => x.id === aId);
+  if (aGoodB || bGoodA) return { type: 'good', reason: (aGoodB || bGoodA).reason };
+  if (aBadB || bBadA) return { type: 'bad', reason: (aBadB || bBadA).reason };
+  return null;
+}
+
+function buildCompatGrid() {
+  const gridEl = document.getElementById('compat-grid');
+  if (!gridEl) return;
+
+  gridEl.innerHTML = '';
+  for (let r = 0; r < COMPAT_ROWS; r++) {
+    for (let c = 0; c < COMPAT_COLS; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'compat-cell' + (compatGrid[r][c] ? '' : ' empty');
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      if (compatGrid[r][c]) cell.textContent = COMPAT_PLANTMAP[compatGrid[r][c]].emoji;
+      cell.addEventListener('click', onCompatCellClick);
+      cell.addEventListener('dblclick', onCompatCellDoubleClick);
+      cell.addEventListener('mouseenter', onCompatCellHover);
+      cell.addEventListener('mouseleave', hideCompatTooltip);
+      gridEl.appendChild(cell);
+    }
+  }
+  if (compatSelectedCell) applyCompatHighlights();
+}
+
+function getCompatCellEl(r, c) {
+  const gridEl = document.getElementById('compat-grid');
+  if (!gridEl) return null;
+  return gridEl.children[r * COMPAT_COLS + c];
+}
+
+function onCompatCellClick(e) {
+  const r = +this.dataset.r, c = +this.dataset.c;
+  if (compatActivePaletteId && !compatGrid[r][c]) {
+    compatGrid[r][c] = compatActivePaletteId;
+    compatSelectedCell = null;
+    buildCompatGrid();
+    return;
+  }
+  if (compatGrid[r][c]) {
+    if (compatSelectedCell && compatSelectedCell[0] === r && compatSelectedCell[1] === c) {
+      compatSelectedCell = null;
+      buildCompatGrid();
+      updateCompatInfoCard(null);
+      return;
+    }
+    compatSelectedCell = [r, c];
+    buildCompatGrid();
+    updateCompatInfoCard(compatGrid[r][c]);
+  }
+}
+
+function onCompatCellDoubleClick(e) {
+  const r = +this.dataset.r, c = +this.dataset.c;
+  if (compatGrid[r][c]) {
+    compatGrid[r][c] = null;
+    compatSelectedCell = null;
+    buildCompatGrid();
+    updateCompatInfoCard(null);
+  }
+}
+
+function getCompatNeighbors(r, c) {
+  const neighbors = [];
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < COMPAT_ROWS && nc >= 0 && nc < COMPAT_COLS && compatGrid[nr][nc]) {
+        neighbors.push([nr, nc]);
+      }
+    }
+  }
+  return neighbors;
+}
+
+function applyCompatHighlights() {
+  const [r, c] = compatSelectedCell;
+  const plantId = compatGrid[r][c];
+  const neighbors = getCompatNeighbors(r, c);
+  const neighborSet = new Set(neighbors.map(([nr, nc]) => nr * COMPAT_COLS + nc));
+
+  for (let rr = 0; rr < COMPAT_ROWS; rr++) {
+    for (let cc = 0; cc < COMPAT_COLS; cc++) {
+      const el = getCompatCellEl(rr, cc);
+      if (!el) continue;
+      el.classList.remove('highlight-good', 'highlight-bad', 'highlight-warn', 'selected');
+      const badge = el.querySelector('.compat-badge');
+      if (badge) badge.remove();
+
+      if (rr === r && cc === c) {
+        el.classList.add('selected');
+        continue;
+      }
+
+      if (compatGrid[rr][cc] && neighborSet.has(rr * COMPAT_COLS + cc)) {
+        const compat = getMutualCompat(plantId, compatGrid[rr][cc]);
+        if (compat) {
+          el.classList.add('highlight-' + compat.type);
+          const b = document.createElement('span');
+          b.className = 'compat-badge ' + compat.type;
+          b.textContent = compat.type === 'good' ? '✅' : '🚫';
+          el.appendChild(b);
+        } else {
+          el.classList.add('highlight-warn');
+          const b = document.createElement('span');
+          b.className = 'compat-badge warn';
+          b.textContent = '⚠️';
+          el.appendChild(b);
+        }
+      }
+    }
+  }
+}
+
+function onCompatCellHover(e) {
+  const r = +this.dataset.r, c = +this.dataset.c;
+  if (!compatGrid[r][c] || !compatSelectedCell) return;
+  const [sr, sc] = compatSelectedCell;
+  if (r === sr && c === sc) return;
+  const dx = Math.abs(r - sr), dy = Math.abs(c - sc);
+  if (dx > 1 || dy > 1) return;
+  const compat = getMutualCompat(compatGrid[sr][sc], compatGrid[r][c]);
+  if (!compat) return;
+
+  const plantA = COMPAT_PLANTMAP[compatGrid[sr][sc]];
+  const plantB = COMPAT_PLANTMAP[compatGrid[r][c]];
+  const color = compat.type === 'good' ? '#3B6D11' : compat.type === 'bad' ? '#A32D2D' : '#854F0B';
+  const icon = compat.type === 'good' ? '✓' : '✕';
+
+  const tooltip = document.getElementById('compat-tooltip');
+  tooltip.innerHTML = `
+    <div class="t-title" style="color:${color}">${icon} ${plantA.name} + ${plantB.name}</div>
+    <div style="font-size:11px;color:#666;margin-top:2px;">${compat.reason}</div>
+  `;
+  tooltip.style.display = 'block';
+  positionCompatTooltip(e);
+}
+
+function positionCompatTooltip(e) {
+  const tooltip = document.getElementById('compat-tooltip');
+  const x = e.clientX + 12, y = e.clientY - 10;
+  tooltip.style.left = Math.min(x, window.innerWidth - 220) + 'px';
+  tooltip.style.top = y + 'px';
+}
+
+document.addEventListener('mousemove', e => {
+  const tooltip = document.getElementById('compat-tooltip');
+  if (tooltip && tooltip.style.display === 'block') positionCompatTooltip(e);
+});
+
+function hideCompatTooltip() {
+  const tooltip = document.getElementById('compat-tooltip');
+  if (tooltip) tooltip.style.display = 'none';
+}
+
+function updateCompatInfoCard(plantId) {
+  const card = document.getElementById('compat-info-card');
+  if (!card) return;
+  
+  if (!plantId) {
+    card.innerHTML = '<h3>COMPATIBILITATE</h3><p class="compat-hint">Selectează o plantă pentru a vedea companionii săi.</p>';
+    return;
+  }
+  const plant = COMPAT_PLANTMAP[plantId];
+  const compat = getCompat(plantId);
+
+  let html = `<h3>COMPATIBILITATE — ${plant.emoji} ${plant.name.toUpperCase()}</h3>`;
+  if (compat.good.length) {
+    html += `<div style="margin-bottom:8px;">`;
+    compat.good.forEach(g => {
+      const p = COMPAT_PLANTMAP[g.id];
+      if (!p) return;
+      html += `<div class="compat-row"><span class="icon t-good">✓</span><span><span class="name">${p.emoji} ${p.name}</span><br><span style="color:#666;font-size:11px;">${g.reason}</span></span></div>`;
+    });
+    html += '</div>';
+  }
+  if (compat.bad.length) {
+    compat.bad.forEach(b => {
+      const p = COMPAT_PLANTMAP[b.id];
+      if (!p) return;
+      html += `<div class="compat-row"><span class="icon t-bad">✕</span><span><span class="name">${p.emoji} ${p.name}</span><br><span style="color:#666;font-size:11px;">${b.reason}</span></span></div>`;
+    });
+  }
+  if (!compat.good.length && !compat.bad.length) {
+    html += '<p class="compat-hint">Nu există date specifice de companion pentru această plantă.</p>';
+  }
+  card.innerHTML = html;
+}
+
+function buildCompatPalette() {
+  const el = document.getElementById('compat-palette');
+  if (!el) return;
+  
+  el.innerHTML = '';
+  COMPANION_PLANTS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'compat-plant-btn';
+    btn.title = p.name;
+    btn.textContent = p.emoji;
+    btn.addEventListener('click', () => {
+      compatActivePaletteId = compatActivePaletteId === p.id ? null : p.id;
+      document.querySelectorAll('.compat-plant-btn').forEach(b => b.classList.remove('active'));
+      if (compatActivePaletteId) btn.classList.add('active');
+      compatSelectedCell = null;
+      buildCompatGrid();
+      updateCompatInfoCard(null);
+    });
+    el.appendChild(btn);
+  });
+}
+
+function clearCompatGrid() {
+  compatGrid = Array(COMPAT_ROWS).fill(null).map(() => Array(COMPAT_COLS).fill(null));
+  compatSelectedCell = null;
+  compatActivePaletteId = null;
+  document.querySelectorAll('.compat-plant-btn').forEach(b => b.classList.remove('active'));
+  buildCompatGrid();
+  updateCompatInfoCard(null);
+}
+
+// Initialize companion planting when the tab is shown
+function initCompanionPlanting() {
+  buildCompatPalette();
+  buildCompatGrid();
+}
+
+// Add to showTab function to initialize companion planting
+const originalShowTab = showTab;
+showTab = function(id) {
+  originalShowTab.call(this, id);
+  if (id === 'companion') {
+    initCompanionPlanting();
+  }
+};
 </script>
 </body>
 </html>
