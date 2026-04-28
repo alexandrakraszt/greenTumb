@@ -3366,19 +3366,9 @@ async function loadFromFirestore() {
       
       // Load gardens data if available
       if (data.gardensData) {
-        // Check if localStorage has more recent data
-        const localRaw = localStorage.getItem(GARDENS_KEY);
-        if (localRaw) {
-          const localGardensData = JSON.parse(localRaw);
-          const localTimestamp = new Date(doc.data().lastUpdated?.toDate?.() || 0).getTime();
-          const firestoreTimestamp = new Date(doc.data().lastUpdated?.toDate?.() || 0).getTime();
-          
-          // Use localStorage data if it exists (prioritize local for current session)
-          gardensData = localGardensData;
-        } else {
-          gardensData = data.gardensData;
-          localStorage.setItem(GARDENS_KEY, JSON.stringify(gardensData));
-        }
+        // Prioritize Firestore data over localStorage
+        gardensData = data.gardensData;
+        localStorage.setItem(GARDENS_KEY, JSON.stringify(gardensData));
         
         if (data.currentGardenId && gardensData[data.currentGardenId]) {
           currentGardenId = data.currentGardenId;
@@ -4007,13 +3997,17 @@ function importData(event) {
     try {
       const imported = JSON.parse(e.target.result);
       if (imported.gardenData) {
+        // Import into current garden
+        gardensData[currentGardenId].gardenData = imported.gardenData;
         gardenData = imported.gardenData;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(gardenData));
         
         if (imported.customPlants) {
           localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(imported.customPlants));
           loadCustomPlants();
         }
+        
+        // Save to both localStorage and Firebase
+        saveGardensData();
         
         initBeds();
         showToast('📂 Date importate cu succes!');
