@@ -3,14 +3,58 @@
 A web-based garden planning and tracking application with Firebase authentication and Firestore data persistence.
 
 ## Features
+1. **Garden Planning (Plan Grădină)**
+   - Interactive garden map with draggable plant beds
+   - Support for multiple garden layouts (raised beds, ground, greenhouse, todo)
+   - Custom plant creation with emoji selection
+   - Decor items placement
+   - Edit mode for adding/modifying plants and decor
+   - Resize functionality for plant beds
 
-- 🌱 **Plant Bed Management**: Create, move, and resize plant beds in an interactive garden view
-- 📅 **Planting Calendar**: Track planting periods and harvest forecasts
-- 📊 **Progress Tracking**: Monitor plant status, watering needs, and harvest quantities
-- 🔐 **User Authentication**: Secure login/signup with Firebase Authentication
-- ☁️ **Data Synchronization**: Automatic sync with Firestore for cross-device access
-- 🎨 **Custom Plants**: Add custom plant types with emojis, types, and observations
-- 📱 **Responsive Design**: Mobile-friendly interface with bottom sheet modals
+2. **Planting Guidance (Ghid Plantare)**
+   - Companion planting recommendations
+   - Plant compatibility checker (good, bad, neutral)
+   - Visual compatibility grid
+   - Seasonal planting recommendations
+
+3. **Planting Calendar (Calendar de plantare)**
+   - Planting schedule based on seasons
+   - Succession planting reminders
+   - Expected harvest dates
+   - Plant status tracking (planted, sprouted, harvested, etc.)
+   - Multi-garden view with filtering
+   - Garden name labels when viewing all gardens
+
+4. **Garden Progress (Progresul Grădinii)**
+   - Plant statistics (planted, sprouted, harvested, etc.)
+   - Garden coverage percentage
+   - Plant density calculations
+   - Harvest forecasts
+   - Watering reminders
+   - Succession planting alerts
+   - Multi-garden view with filtering
+
+5. **Weather Integration**
+   - Location-based weather data (Open-Meteo API)
+   - Current temperature and conditions
+   - 5-day forecast
+   - Gardening advice based on weather
+   - Session-based location permission caching
+
+### Multi-Garden Support
+
+1. **Garden Management**
+   - Create multiple gardens with custom names
+   - Switch between gardens using dropdown selector
+   - Delete gardens (with data persistence)
+   - Each garden maintains its own plant data
+
+2. **Data Persistence**
+   - LocalStorage for instant access
+   - Firestore synchronization for authenticated users
+   - Automatic sync across devices
+   - Session-based data prioritization
+
 
 ## Architecture
 
