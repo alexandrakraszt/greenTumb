@@ -3392,16 +3392,18 @@ async function initializeFirebase() {
         // Always load from Firestore to get the latest data, then merge with local data
         const firestoreResult = await loadFromFirestore();
         
-        // If local data exists and is newer, merge it with Firestore data
+        // If local data exists, merge it with Firestore data
         const localGardensData = JSON.parse(localStorage.getItem(GARDENS_KEY) || '{}');
         if (Object.keys(localGardensData).length > 0) {
           console.log('[initializeFirebase] Merging local data with Firestore data');
-          // Merge local data into gardensData (local takes precedence for existing gardens)
+          // Start with Firestore data, then merge local data on top
+          // This ensures gardens from both sources are included
           Object.keys(localGardensData).forEach(gardenId => {
             if (!gardensData[gardenId]) {
+              // Garden exists locally but not in Firestore - add it
               gardensData[gardenId] = localGardensData[gardenId];
             } else {
-              // Merge garden data - local takes precedence
+              // Garden exists in both - merge data (local takes precedence)
               gardensData[gardenId].gardenData = {
                 ...gardensData[gardenId].gardenData,
                 ...localGardensData[gardenId].gardenData
@@ -3412,7 +3414,7 @@ async function initializeFirebase() {
               }
             }
           });
-          // Save merged data back to Firestore
+          // Save merged data back to Firestore to sync across devices
           saveGardensData();
           
           // Load current garden data after merge
@@ -3704,15 +3706,18 @@ async function handleAuthSubmit() {
       // Load data from Firestore and merge with local data
       const firestoreResult = await loadFromFirestore();
       
-      // Merge local data with Firestore data (local takes precedence)
+      // Merge local data with Firestore data
       const localGardensData = JSON.parse(localStorage.getItem(GARDENS_KEY) || '{}');
       if (Object.keys(localGardensData).length > 0) {
         console.log('[handleAuthSubmit] Merging local data with Firestore data after login');
+        // Start with Firestore data, then merge local data on top
+        // This ensures gardens from both sources are included
         Object.keys(localGardensData).forEach(gardenId => {
           if (!gardensData[gardenId]) {
+            // Garden exists locally but not in Firestore - add it
             gardensData[gardenId] = localGardensData[gardenId];
           } else {
-            // Merge garden data - local takes precedence
+            // Garden exists in both - merge data (local takes precedence)
             gardensData[gardenId].gardenData = {
               ...gardensData[gardenId].gardenData,
               ...localGardensData[gardenId].gardenData
@@ -3723,7 +3728,7 @@ async function handleAuthSubmit() {
             }
           }
         });
-        // Save merged data back to Firestore
+        // Save merged data back to Firestore to sync across devices
         saveGardensData();
       }
       
@@ -3923,14 +3928,14 @@ function saveModal() {
     wateringDate: wateringDateInput
   };
   
-  // Add to history if status changed
-  if (status !== data.status) {
+  // Add to history if status changed OR if note is provided
+  if (status !== data.status || noteInput) {
     gardenData[currentId].history = (data.history || []).concat({
       date: new Date().toISOString().split('T')[0],
       status: status,
       note: noteInput
     });
-    console.log('[saveModal] Status changed, history updated');
+    console.log('[saveModal] History updated');
   }
   
   saveData(gardenData);
@@ -4803,7 +4808,8 @@ function getSeasonalRecommendations() {
 
 function calculateHarvestForecast() {
   const forecast = [];
-  const ids = Object.keys(PLANTS).filter(id => document.querySelector(`[data-id="${id}"]`));
+  // Only include plants that are in the current garden
+  const ids = Object.keys(gardensData[currentGardenId]?.gardenData || {});
   
   ids.forEach(id => {
     const data = getData(id);
@@ -4832,7 +4838,8 @@ function calculateHarvestForecast() {
 
 function calculatePlantingToHarvestTimeline() {
   const timeline = [];
-  const ids = Object.keys(PLANTS).filter(id => document.querySelector(`[data-id="${id}"]`));
+  // Only include plants that are in the current garden
+  const ids = Object.keys(gardensData[currentGardenId]?.gardenData || {});
   
   ids.forEach(id => {
     const data = getData(id);
