@@ -35,24 +35,24 @@
   let currentUser = null;
   let dbInitialized = false;
 
-  // Cache-busting using timestamp - automatically forces reload daily
-  // Skip reload if data is being imported via URL parameter
+  // Track last visit date for soft update notification (no forced reload)
   const urlParams = new URLSearchParams(window.location.search);
   const hasDataParam = urlParams.has('data');
   
   if (!hasDataParam) {
     const today = new Date().toDateString();
     const lastVisit = localStorage.getItem('last_visit_date');
-    if (lastVisit !== today) {
-      localStorage.setItem('last_visit_date', today);
-      // Force reload to get latest version
-      if (performance.getEntriesByType) {
-        const nav = performance.getEntriesByType('navigation')[0];
-        if (nav && nav.type === 'back_forward') {
-          location.reload(true);
-        }
-      }
+    if (lastVisit && lastVisit !== today) {
+      // Show a soft banner instead of force-reloading
+      window.addEventListener('DOMContentLoaded', () => {
+        const banner = document.createElement('div');
+        banner.id = 'update-banner';
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:10000;background:#2D5016;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-family:Nunito,sans-serif;display:flex;align-items:center;justify-content:center;gap:12px;';
+        banner.innerHTML = `<span>🔄 O nouă versiune poate fi disponibilă.</span><button onclick="location.reload(true)" style="background:#7AB648;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;">Reîncarcă</button><button onclick="document.getElementById('update-banner').remove()" style="background:transparent;color:#ccc;border:none;font-size:18px;cursor:pointer;line-height:1;">✕</button>`;
+        document.body.prepend(banner);
+      });
     }
+    localStorage.setItem('last_visit_date', today);
   }
 </script>
 <style>
@@ -2739,9 +2739,46 @@ function markBatchPlanted(plantName, batchIndex, intervalDays, daysToHarvest) {
   showToast(`✅ Lot ${batchIndex + 1} marcat ca plantat! Data actualizată la ${todayStr}`);
 }
 
-// Undo/redo history
+// Undo/redo history (each entry snapshots both gardenData and decorItems)
 let historyStack = [];
 let redoStack = [];
+
+function pushUndoSnapshot() {
+  historyStack.push({ gardenData: JSON.stringify(gardenData), decorItems: JSON.stringify(decorItems) });
+  if (historyStack.length > MAX_HISTORY) historyStack.shift();
+  redoStack = [];
+}
+
+function undoAction() {
+  if (historyStack.length === 0) { showToast('⚠️ Nimic de anulat'); return; }
+  redoStack.push({ gardenData: JSON.stringify(gardenData), decorItems: JSON.stringify(decorItems) });
+  const snap = historyStack.pop();
+  gardenData = JSON.parse(snap.gardenData);
+  decorItems = JSON.parse(snap.decorItems);
+  saveData(gardenData);
+  saveDecorData();
+  initBeds();
+  renderDecorItems();
+  showToast('↩️ Acțiune anulată');
+}
+
+function redoAction() {
+  if (redoStack.length === 0) { showToast('⚠️ Nimic de refăcut'); return; }
+  historyStack.push({ gardenData: JSON.stringify(gardenData), decorItems: JSON.stringify(decorItems) });
+  const snap = redoStack.pop();
+  gardenData = JSON.parse(snap.gardenData);
+  decorItems = JSON.parse(snap.decorItems);
+  saveData(gardenData);
+  saveDecorData();
+  initBeds();
+  renderDecorItems();
+  showToast('↪️ Acțiune refăcută');
+}
+
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undoAction(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redoAction(); }
+});
 
 // Edit mode state
 let editMode = false;
@@ -2972,22 +3009,61 @@ function saveGardensData() {
     console.error('Error saving gardens data:', e);
   }
   
-  // Also save current garden to Firestore if authenticated
+  // Also save to Firestore if authenticated
   if (currentUser) {
-    try {
-      const customPlants = JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]');
-      const emailHistory = JSON.parse(localStorage.getItem(EMAIL_HISTORY_KEY) || '[]');
-      // Use set without merge to properly handle deletions
-      db.collection('gardens').doc(currentUser.uid).set({
-        gardensData: gardensData,
-        currentGardenId: currentGardenId,
-        customPlants: customPlants,
-        emailHistory: emailHistory,
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    } catch(error) {
-      console.error('Error saving gardens to Firestore:', error);
+    updateSyncStatus('⏳ Se salvează...');
+    const customPlants = JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]');
+    const emailHistory = JSON.parse(localStorage.getItem(EMAIL_HISTORY_KEY) || '[]');
+    db.collection('gardens').doc(currentUser.uid).set({
+      gardensData: gardensData,
+      currentGardenId: currentGardenId,
+      customPlants: customPlants,
+      emailHistory: emailHistory,
+      lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      const timestamp = new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+      updateSyncStatus(`✓ Salvat la ${timestamp}`);
+    }).catch(error => {
+      console.error('Error saving to Firestore:', error);
+      updateSyncStatus('❌ Eroare la salvare');
+      showToast('❌ Nu s-a putut salva în cloud. Verifică conexiunea.');
+    });
+  }
+}
+
+let _realtimeUnsubscribe = null;
+
+function startRealtimeListener() {
+  if (!currentUser || _realtimeUnsubscribe) return;
+  
+  console.log('[realtime] Starting Firestore listener');
+  _realtimeUnsubscribe = db.collection('gardens').doc(currentUser.uid).onSnapshot(doc => {
+    if (!doc.exists) return;
+    const data = doc.data();
+    
+    // Ignore updates triggered by our own saves (within 2s)
+    const lastUpdated = data.lastUpdated?.toDate?.();
+    if (lastUpdated && (new Date() - lastUpdated) < 2000) return;
+    
+    if (data.gardensData) {
+      gardensData = data.gardensData;
+      localStorage.setItem(GARDENS_KEY, JSON.stringify(gardensData));
+      loadCurrentGardenData();
+      updateGardenSelector();
+      const timestamp = new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+      updateSyncStatus(`✓ Sincronizat la ${timestamp}`);
+      console.log('[realtime] Data updated from Firestore');
     }
+  }, error => {
+    console.error('[realtime] Listener error:', error);
+  });
+}
+
+function stopRealtimeListener() {
+  if (_realtimeUnsubscribe) {
+    _realtimeUnsubscribe();
+    _realtimeUnsubscribe = null;
+    console.log('[realtime] Listener stopped');
   }
 }
 
@@ -3441,6 +3517,7 @@ async function initializeFirebase() {
         
         loadCustomPlants();
         initBeds();
+        startRealtimeListener();
         console.log('About to load decor data...');
         loadDecorData().then(() => {
           console.log('Decor data loading completed');
@@ -3759,6 +3836,7 @@ async function handleAuthSubmit() {
       loadCurrentGardenData();
       initBeds();
       updateGardenSelector();
+      startRealtimeListener();
       // Prevent onAuthStateChanged from re-running the full init for this login
       _authInitialized = true;
       console.log('Loaded and merged data from Firestore');
@@ -3790,6 +3868,7 @@ async function handleLogout() {
     await auth.signOut();
     currentUser = null;
     _authInitialized = false;
+    stopRealtimeListener();
     console.log('[handleLogout] User signed out successfully');
     showToast('✅ Te-ai deconectat');
     
@@ -4014,6 +4093,12 @@ function addHarvestEntry() {
     return;
   }
   
+  const qty = parseFloat(harvestQuantity);
+  if (isNaN(qty) || qty <= 0) {
+    showToast('⚠️ Cantitatea trebuie să fie un număr pozitiv!');
+    return;
+  }
+  
   const existing = getData(currentId);
   const harvest = existing.harvest || [];
   harvest.push({ date: harvestDate, quantity: harvestQuantity });
@@ -4049,6 +4134,7 @@ function renderHarvestList(harvest) {
 
 function removeHarvestEntry(index) {
   if (!currentId) return;
+  if (!confirm('Ștergi această înregistrare de recoltă?')) return;
   const existing = getData(currentId);
   const harvest = existing.harvest || [];
   
@@ -4063,6 +4149,7 @@ function removeHarvestEntry(index) {
 
 function removeHistoryItem(index) {
   if (!currentId) return;
+  if (!confirm('Ștergi această notă din istoric?')) return;
   const existing = getData(currentId);
   const history = existing.history || [];
   
@@ -4100,10 +4187,8 @@ function deletePlant() {
     return;
   }
   
-  // Save to history before deleting
-  historyStack.push(JSON.stringify(gardenData));
-  if (historyStack.length > MAX_HISTORY) historyStack.shift();
-  redoStack = [];
+  // Save snapshot before deleting (includes decorItems)
+  pushUndoSnapshot();
   
   // Remove from gardenData
   delete gardenData[currentId];
@@ -5053,8 +5138,17 @@ function renderCalendar() {
 
 // ============ PROGRESS ============
 function renderProgress() {
-  // Get selected garden filter
+  // Get selected garden filter, restore persisted value
   const progressFilter = document.getElementById('progress-garden-filter');
+  if (progressFilter && !progressFilter.dataset.initialized) {
+    const saved = localStorage.getItem('progress_garden_filter');
+    if (saved && (saved === 'all' || gardensData[saved])) progressFilter.value = saved;
+    progressFilter.dataset.initialized = '1';
+    progressFilter.addEventListener('change', () => {
+      localStorage.setItem('progress_garden_filter', progressFilter.value);
+      renderProgress();
+    });
+  }
   const selectedGardenId = progressFilter ? progressFilter.value : 'all';
   
   // Aggregate data from all gardens based on filter
