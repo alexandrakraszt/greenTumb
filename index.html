@@ -2711,10 +2711,8 @@ function markBatchPlanted(plantName, batchIndex, intervalDays, daysToHarvest) {
   };
 
   // Store the actual planting date for succession tracking
-  if (!gardenData[currentId].successionPlantings) {
-    gardenData[currentId].successionPlantings = [];
-  }
-  gardenData[currentId].successionPlantings.push({
+  const existingSuccession = data.successionPlantings || [];
+  gardenData[currentId].successionPlantings = existingSuccession.concat({
     batch: batchIndex + 1,
     date: todayStr
   });
@@ -2979,13 +2977,14 @@ function saveGardensData() {
     try {
       const customPlants = JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]');
       const emailHistory = JSON.parse(localStorage.getItem(EMAIL_HISTORY_KEY) || '[]');
+      // Use set without merge to properly handle deletions
       db.collection('gardens').doc(currentUser.uid).set({
         gardensData: gardensData,
         currentGardenId: currentGardenId,
         customPlants: customPlants,
         emailHistory: emailHistory,
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      });
     } catch(error) {
       console.error('Error saving gardens to Firestore:', error);
     }
@@ -3352,6 +3351,8 @@ function deleteDecor(decorId) {
   
   showToast('✅ Element decorativ șters!');
 }
+let _authInitialized = false;
+
 async function initializeFirebase() {
   // Load email history on page load
   loadEmailHistory();
@@ -3360,6 +3361,13 @@ async function initializeFirebase() {
     // Check for existing session
     auth.onAuthStateChanged(async (user) => {
       if (user) {
+        // Prevent double-initialization when handleAuthSubmit already set currentUser
+        if (_authInitialized && currentUser && currentUser.uid === user.uid) {
+          console.log('[initializeFirebase] Auth state already handled, skipping duplicate init');
+          return;
+        }
+        _authInitialized = true;
+
         currentUser = user;
         console.log('User signed in:', user.email, user.uid);
         dbInitialized = true;
@@ -3388,22 +3396,21 @@ async function initializeFirebase() {
           console.log('Edit button not found');
         }
         
+        // Capture local data BEFORE loadFromFirestore overwrites localStorage
+        const localGardensData = JSON.parse(localStorage.getItem(GARDENS_KEY) || '{}');
+        
         // Load data from Firestore for this user
-        // Always load from Firestore to get the latest data, then merge with local data
         const firestoreResult = await loadFromFirestore();
         
-        // If local data exists, merge it with Firestore data
-        const localGardensData = JSON.parse(localStorage.getItem(GARDENS_KEY) || '{}');
+        // Merge local data into Firestore data (adds gardens that only exist locally)
         if (Object.keys(localGardensData).length > 0) {
           console.log('[initializeFirebase] Merging local data with Firestore data');
-          // Start with Firestore data, then merge local data on top
-          // This ensures gardens from both sources are included
           Object.keys(localGardensData).forEach(gardenId => {
             if (!gardensData[gardenId]) {
               // Garden exists locally but not in Firestore - add it
               gardensData[gardenId] = localGardensData[gardenId];
             } else {
-              // Garden exists in both - merge data (local takes precedence)
+              // Garden exists in both - merge plant data (local takes precedence)
               gardensData[gardenId].gardenData = {
                 ...gardensData[gardenId].gardenData,
                 ...localGardensData[gardenId].gardenData
@@ -3687,12 +3694,29 @@ async function handleAuthSubmit() {
       showToast('✅ Cont creat cu succes!');
       closeAuthModal();
       
-      // Save any existing local data to the new account
-      const localData = localStorage.getItem(STORAGE_KEY);
-      if (localData) {
-        const gardenDataLocal = JSON.parse(localData);
-        await saveData(gardenDataLocal);
+      // Save any existing local gardens data to the new account
+      const localGardensRaw = localStorage.getItem(GARDENS_KEY);
+      if (localGardensRaw) {
+        try {
+          gardensData = JSON.parse(localGardensRaw);
+        } catch(e) {}
+      } else {
+        // Migrate old single-garden format if it exists
+        const oldData = localStorage.getItem(STORAGE_KEY);
+        if (oldData) {
+          gardensData = {
+            'default': {
+              name: 'Grădina principală',
+              gardenData: JSON.parse(oldData),
+              decorItems: JSON.parse(localStorage.getItem(DECOR_ITEMS_KEY) || '[]')
+            }
+          };
+        }
       }
+      saveGardensData();
+      loadCurrentGardenData();
+      initBeds();
+      updateGardenSelector();
     } else {
       // Log in
       console.log('[handleAuthSubmit] Attempting login for email:', email);
@@ -3703,21 +3727,21 @@ async function handleAuthSubmit() {
       showToast('✅ Autentificat cu succes!');
       closeAuthModal();
       
+      // Capture local data BEFORE loadFromFirestore overwrites localStorage
+      const localGardensData = JSON.parse(localStorage.getItem(GARDENS_KEY) || '{}');
+
       // Load data from Firestore and merge with local data
       const firestoreResult = await loadFromFirestore();
       
-      // Merge local data with Firestore data
-      const localGardensData = JSON.parse(localStorage.getItem(GARDENS_KEY) || '{}');
+      // Merge local data into Firestore data (adds gardens that only exist locally)
       if (Object.keys(localGardensData).length > 0) {
         console.log('[handleAuthSubmit] Merging local data with Firestore data after login');
-        // Start with Firestore data, then merge local data on top
-        // This ensures gardens from both sources are included
         Object.keys(localGardensData).forEach(gardenId => {
           if (!gardensData[gardenId]) {
             // Garden exists locally but not in Firestore - add it
             gardensData[gardenId] = localGardensData[gardenId];
           } else {
-            // Garden exists in both - merge data (local takes precedence)
+            // Garden exists in both - merge plant data (local takes precedence)
             gardensData[gardenId].gardenData = {
               ...gardensData[gardenId].gardenData,
               ...localGardensData[gardenId].gardenData
@@ -3734,6 +3758,9 @@ async function handleAuthSubmit() {
       
       loadCurrentGardenData();
       initBeds();
+      updateGardenSelector();
+      // Prevent onAuthStateChanged from re-running the full init for this login
+      _authInitialized = true;
       console.log('Loaded and merged data from Firestore');
     }
   } catch (error) {
@@ -3762,6 +3789,7 @@ async function handleLogout() {
   try {
     await auth.signOut();
     currentUser = null;
+    _authInitialized = false;
     console.log('[handleLogout] User signed out successfully');
     showToast('✅ Te-ai deconectat');
     
@@ -3942,26 +3970,28 @@ function saveModal() {
 
   // Update bed dot
   const bed = document.querySelector(`[data-id="${currentId}"]`);
-  if (bed) bed.dataset.status = status;
-  
-  // Update emoji in bed if changed
-  if (emojiInput) {
-    const bedEmoji = bed.querySelector('.bed-emoji');
-    if (bedEmoji) bedEmoji.textContent = emojiInput;
-  }
-  
-  // Update name in bed if changed
-  if (nameInput) {
-    const bedName = bed.querySelector('.bed-name');
-    if (bedName) bedName.textContent = nameInput;
-  }
-  
-  // Update bed class based on type
-  if (bed && typeInput) {
-    const bedClass = getBedClassFromPlantType(typeInput);
-    bed.className = `bed ${bedClass}`;
-    const typeBadge = bed.querySelector('.bed-type-badge');
-    if (typeBadge) typeBadge.textContent = typeInput;
+  if (bed) {
+    bed.dataset.status = status;
+
+    // Update emoji in bed if changed
+    if (emojiInput) {
+      const bedEmoji = bed.querySelector('.bed-emoji');
+      if (bedEmoji) bedEmoji.textContent = emojiInput;
+    }
+    
+    // Update name in bed if changed
+    if (nameInput) {
+      const bedName = bed.querySelector('.bed-name');
+      if (bedName) bedName.textContent = nameInput;
+    }
+    
+    // Update bed class based on type
+    if (typeInput) {
+      const bedClass = getBedClassFromPlantType(typeInput);
+      bed.className = `bed ${bedClass}`;
+      const typeBadge = bed.querySelector('.bed-type-badge');
+      if (typeBadge) typeBadge.textContent = typeInput;
+    }
   }
   
   // Update PLANTS object
@@ -4041,8 +4071,23 @@ function removeHistoryItem(index) {
     gardenData[currentId] = { ...existing, history };
     saveData(gardenData);
     
-    // Refresh history display
-    openModal(currentId);
+    // Refresh only the history list in place, without reopening the modal
+    const histSection = document.getElementById('history-section');
+    const histList = document.getElementById('history-list');
+    if (history.length > 0) {
+      histSection.style.display = 'block';
+      histList.innerHTML = history.slice(-5).reverse().map((h, i) => {
+        const actualIndex = history.length - 1 - i;
+        return `
+        <div class="history-item">
+          <span class="history-date">${h.date}</span>
+          <span style="flex:1">${h.note || ('Status: ' + h.status)}</span>
+          <button onclick="removeHistoryItem(${actualIndex})" style="background:none;border:none;color:#ff6b6b;cursor:pointer;font-size:16px;padding:0 4px;">✕</button>
+        </div>`;
+      }).join('');
+    } else {
+      histSection.style.display = 'none';
+    }
     showToast('🗑️ Notă ștearsă');
   }
 }
