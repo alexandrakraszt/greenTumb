@@ -3265,12 +3265,35 @@ async function initializeFirebase() {
           console.log('Edit button not found');
         }
         
-        // Load data from Firestore for this user (only if not already loaded from localStorage)
-        if (Object.keys(gardensData).length === 0) {
-          const result = await loadFromFirestore();
-        } else {
-          // Data already loaded from localStorage, just sync to Firestore
+        // Load data from Firestore for this user
+        // Always load from Firestore to get the latest data, then merge with local data
+        const firestoreResult = await loadFromFirestore();
+        
+        // If local data exists and is newer, merge it with Firestore data
+        const localGardensData = JSON.parse(localStorage.getItem(GARDENS_KEY) || '{}');
+        if (Object.keys(localGardensData).length > 0) {
+          console.log('[initializeFirebase] Merging local data with Firestore data');
+          // Merge local data into gardensData (local takes precedence for existing gardens)
+          Object.keys(localGardensData).forEach(gardenId => {
+            if (!gardensData[gardenId]) {
+              gardensData[gardenId] = localGardensData[gardenId];
+            } else {
+              // Merge garden data - local takes precedence
+              gardensData[gardenId].gardenData = {
+                ...gardensData[gardenId].gardenData,
+                ...localGardensData[gardenId].gardenData
+              };
+              // Merge decor items
+              if (localGardensData[gardenId].decorItems) {
+                gardensData[gardenId].decorItems = localGardensData[gardenId].decorItems;
+              }
+            }
+          });
+          // Save merged data back to Firestore
           saveGardensData();
+          
+          // Load current garden data after merge
+          loadCurrentGardenData();
         }
         
         // Check if user is new (empty gardenData)
@@ -3555,11 +3578,35 @@ async function handleAuthSubmit() {
       showToast('✅ Autentificat cu succes!');
       closeAuthModal();
       
-      // Load data from Firestore (source of truth)
+      // Load data from Firestore and merge with local data
       const firestoreResult = await loadFromFirestore();
-      gardenData = firestoreResult.gardenData;
+      
+      // Merge local data with Firestore data (local takes precedence)
+      const localGardensData = JSON.parse(localStorage.getItem(GARDENS_KEY) || '{}');
+      if (Object.keys(localGardensData).length > 0) {
+        console.log('[handleAuthSubmit] Merging local data with Firestore data after login');
+        Object.keys(localGardensData).forEach(gardenId => {
+          if (!gardensData[gardenId]) {
+            gardensData[gardenId] = localGardensData[gardenId];
+          } else {
+            // Merge garden data - local takes precedence
+            gardensData[gardenId].gardenData = {
+              ...gardensData[gardenId].gardenData,
+              ...localGardensData[gardenId].gardenData
+            };
+            // Merge decor items
+            if (localGardensData[gardenId].decorItems) {
+              gardensData[gardenId].decorItems = localGardensData[gardenId].decorItems;
+            }
+          }
+        });
+        // Save merged data back to Firestore
+        saveGardensData();
+      }
+      
+      loadCurrentGardenData();
       initBeds();
-      console.log('Loaded data from Firestore');
+      console.log('Loaded and merged data from Firestore');
     }
   } catch (error) {
     console.error('[handleAuthSubmit] Authentication error:', error);
