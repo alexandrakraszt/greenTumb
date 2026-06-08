@@ -2592,7 +2592,10 @@ function renderSuccessionPlan(plantName) {
     
     // Mark batches that have been planted and attach actual recorded dates
     batches.forEach(b => {
-      const actual = successionPlantings.find(sp => sp.batch === b.batch);
+      const actual = successionPlantings.find(sp =>
+        sp.batch === b.batch &&
+        (!sp.plant || normalizeDiacritics(sp.plant) === normalizeDiacritics(plantName))
+      );
       if (actual) {
         b.actualPlantDate = new Date(actual.date);
         b.status = b.daysUntilHarvest > 0 ? 'în creștere' : 'recoltat';
@@ -2684,7 +2687,10 @@ function renderSuccessionPlan(plantName) {
       
       // Mark batches that have been planted and attach actual recorded dates
       batches.forEach(b => {
-        const actual = successionPlantings.find(sp => sp.batch === b.batch);
+        const actual = successionPlantings.find(sp =>
+          sp.batch === b.batch &&
+          (!sp.plant || normalizeDiacritics(sp.plant) === normalizeDiacritics(displayName))
+        );
         if (actual) {
           b.actualPlantDate = new Date(actual.date);
           b.status = b.daysUntilHarvest > 0 ? 'în creștere' : 'recoltat';
@@ -2713,7 +2719,7 @@ function renderSuccessionPlan(plantName) {
                   <span style="color:#888;">Rec.: ${fmtDate(b.harvestDate)}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:4px;">
-                  <button onclick="updateBatchDate(${b.batch}, '${iid}')" style="background:#78909C;color:white;border:none;border-radius:4px;padding:2px 6px;font-size:9px;cursor:pointer;">✓</button>
+                  <button onclick="updateBatchDate(${b.batch}, '${iid}', '${displayName}')" style="background:#78909C;color:white;border:none;border-radius:4px;padding:2px 6px;font-size:9px;cursor:pointer;">✓</button>
                   <span class="status-pill plantat" style="font-size:9px;">${b.status}</span>
                 </div>
               </div>`;
@@ -2726,7 +2732,7 @@ function renderSuccessionPlan(plantName) {
                   <span style="color:#888;">Rec.: ${fmtDate(b.harvestDate)}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:4px;">
-                  <button onclick="markBatchPlanted('${displayName}', ${index}, ${defaults.interval}, ${defaults.daysToHarvest}, '${iid}')" style="background:var(--green-mid);color:white;border:none;border-radius:4px;padding:2px 6px;font-size:9px;cursor:pointer;font-weight:700;">✓ Plantează</button>
+                  <button onclick="markBatchPlanted('${plantName}', ${index}, ${defaults.interval}, ${defaults.daysToHarvest}, '${iid}', '${displayName}')" style="background:var(--green-mid);color:white;border:none;border-radius:4px;padding:2px 6px;font-size:9px;cursor:pointer;font-weight:700;">✓ Plantează</button>
                   <span class="status-pill neplantat" style="font-size:9px;">${b.status}</span>
                 </div>
               </div>`;
@@ -2742,7 +2748,7 @@ function renderSuccessionPlan(plantName) {
 }
 
 // Mark a succession batch as planted
-function markBatchPlanted(plantName, batchIndex, intervalDays, daysToHarvest, dateInputId) {
+function markBatchPlanted(plantName, batchIndex, intervalDays, daysToHarvest, dateInputId, singlePlantName) {
   if (!currentId) {
     showToast('⚠️ Selectează o plantă din grădină!');
     return;
@@ -2764,10 +2770,12 @@ function markBatchPlanted(plantName, batchIndex, intervalDays, daysToHarvest, da
   };
 
   // Store the actual planting date for succession tracking
+  const batchPlant = singlePlantName || plantName;
   const existingSuccession = data.successionPlantings || [];
   gardenData[currentId].successionPlantings = existingSuccession.concat({
     batch: batchIndex + 1,
-    date: plantDate
+    date: plantDate,
+    plant: batchPlant
   });
 
   // Add to history
@@ -2793,17 +2801,20 @@ function markBatchPlanted(plantName, batchIndex, intervalDays, daysToHarvest, da
 }
 
 // Correct the recorded date of an already-planted succession lot
-function updateBatchDate(batchNum, dateInputId) {
+function updateBatchDate(batchNum, dateInputId, singlePlantName) {
   if (!currentId) return;
   const dateEl = document.getElementById(dateInputId);
   if (!dateEl || !dateEl.value) { showToast('⚠️ Selectează o dată!'); return; }
   const data = getData(currentId);
-  const successionPlantings = (data.successionPlantings || []).map(sp =>
-    sp.batch === batchNum ? { ...sp, date: dateEl.value } : sp
-  );
-  // Also correct the main planting date if this is Lot 1
+  const successionPlantings = (data.successionPlantings || []).map(sp => {
+    const matchesBatch = sp.batch === batchNum;
+    const matchesPlant = !singlePlantName || !sp.plant ||
+      normalizeDiacritics(sp.plant) === normalizeDiacritics(singlePlantName);
+    return (matchesBatch && matchesPlant) ? { ...sp, date: dateEl.value } : sp;
+  });
+  // Correct main planting date only for single-plant beds (Lot 1)
   const newData = { ...data, successionPlantings };
-  if (batchNum === 1) newData.date = dateEl.value;
+  if (batchNum === 1 && !singlePlantName) newData.date = dateEl.value;
   gardenData[currentId] = newData;
   saveData(gardenData);
   renderSuccessionPlan(data.name || PLANTS[currentId]?.name || '');
