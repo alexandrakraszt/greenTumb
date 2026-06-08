@@ -1242,6 +1242,7 @@
     </select>
     <button onclick="openGardenModal()" style="background:var(--green-mid);color:white;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;">➕ Adaugă</button>
     <button onclick="toggleEditMode()" id="edit-mode-btn" style="background:#FF9800;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;">✏️ Editează</button>
+    <button onclick="deleteCurrentGarden()" style="background:#E74C3C;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;">🗑️ Șterge</button>
     
     <!-- Edit mode controls (shown only when edit mode is active) -->
     <div id="edit-mode-controls" style="display:none;gap:8px;align-items:center;margin-left:auto;">
@@ -2565,12 +2566,33 @@ function renderSuccessionPlan(plantName) {
       return;
     }
 
-    const firstDate = new Date();
-    firstDate.setHours(0,0,0,0);
-    const currentYear = firstDate.getFullYear();
+    // Get actual planting dates from stored succession plantings
+    const data = getData(currentId);
+    const successionPlantings = data.successionPlantings || [];
+    
+    // Use the most recent planting date as the base, or today if none
+    let baseDate = new Date();
+    baseDate.setHours(0,0,0,0);
+    
+    if (successionPlantings.length > 0) {
+      const mostRecent = successionPlantings[successionPlantings.length - 1];
+      baseDate = new Date(mostRecent.date);
+      baseDate.setHours(0,0,0,0);
+    }
+
+    const currentYear = baseDate.getFullYear();
     const seasonEnd = new Date(currentYear, 9, 31); // October 31 of current year
 
-    const batches = generateSuccession(plantName, firstDate, defaults.interval, defaults.daysToHarvest, defaults.batches, seasonEnd);
+    const batches = generateSuccession(plantName, baseDate, defaults.interval, defaults.daysToHarvest, defaults.batches, seasonEnd);
+    
+    // Mark batches that have been planted
+    const plantedBatches = successionPlantings.map(sp => sp.batch);
+    batches.forEach(b => {
+      if (plantedBatches.includes(b.batch)) {
+        b.status = 'în creștere';
+      }
+    });
+    
     const nextAction = getNextActionMessage(plantName, batches);
 
     if (nextAction) {
@@ -2579,23 +2601,38 @@ function renderSuccessionPlan(plantName) {
       messageEl.textContent = `Toate loturile pentru ${plantName} au fost programate.`;
     }
 
-    batchesEl.innerHTML = batches.map(b => `
+    batchesEl.innerHTML = batches.map((b, index) => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:#fff;border-radius:6px;margin-bottom:4px;">
         <div>
           <span style="font-weight:700;color:#666;">Lot ${b.batch}</span>
           <span style="margin-left:8px;color:#888;">Plantare: ${fmtDate(b.plantDate)}</span>
           <span style="margin-left:8px;color:#888;">Recoltare: ${fmtDate(b.harvestDate)}</span>
         </div>
-        <span class="status-pill ${b.status === 'programat' ? 'neplantat' : b.status === 'în creștere' ? 'plantat' : 'recoltat'}">${b.status}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${b.status === 'programat' ? `<button onclick="markBatchPlanted('${plantName}', ${index}, ${defaults.interval}, ${defaults.daysToHarvest})" style="background:var(--green-mid);color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700;">✓ Plantează</button>` : ''}
+          <span class="status-pill ${b.status === 'programat' ? 'neplantat' : b.status === 'în creștere' ? 'plantat' : 'recoltat'}">${b.status}</span>
+        </div>
       </div>
     `).join('');
   } else {
     // Multiple plants - show succession plan for each
     messageEl.textContent = `Plan de plantare succesivă pentru ${plantNames.length} plante:`;
 
-    const firstDate = new Date();
-    firstDate.setHours(0,0,0,0);
-    const currentYear = firstDate.getFullYear();
+    // Get actual planting dates from stored succession plantings
+    const data = getData(currentId);
+    const successionPlantings = data.successionPlantings || [];
+    
+    // Use the most recent planting date as the base, or today if none
+    let baseDate = new Date();
+    baseDate.setHours(0,0,0,0);
+    
+    if (successionPlantings.length > 0) {
+      const mostRecent = successionPlantings[successionPlantings.length - 1];
+      baseDate = new Date(mostRecent.date);
+      baseDate.setHours(0,0,0,0);
+    }
+
+    const currentYear = baseDate.getFullYear();
     const seasonEnd = new Date(currentYear, 9, 31); // October 31 of current year
 
     let allBatchesHtml = '';
@@ -2615,7 +2652,16 @@ function renderSuccessionPlan(plantName) {
         return;
       }
 
-      const batches = generateSuccession(displayName, firstDate, defaults.interval, defaults.daysToHarvest, defaults.batches, seasonEnd);
+      const batches = generateSuccession(displayName, baseDate, defaults.interval, defaults.daysToHarvest, defaults.batches, seasonEnd);
+      
+      // Mark batches that have been planted
+      const plantedBatches = successionPlantings.map(sp => sp.batch);
+      batches.forEach(b => {
+        if (plantedBatches.includes(b.batch)) {
+          b.status = 'în creștere';
+        }
+      });
+      
       const nextAction = getNextActionMessage(displayName, batches);
 
       allBatchesHtml += `
@@ -2623,14 +2669,17 @@ function renderSuccessionPlan(plantName) {
           <strong>${pName}</strong>
           ${nextAction ? `<div style="color:var(--green-deep);font-weight:600;font-size:11px;margin-bottom:4px;">${nextAction}</div>` : ''}
           <div style="max-height:120px;overflow-y:auto;padding-right:4px;">
-            ${batches.map(b => `
+            ${batches.map((b, index) => `
               <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 6px;background:#fff;border-radius:4px;margin-bottom:2px;font-size:11px;">
                 <div>
                   <span style="font-weight:600;color:#666;">Lot ${b.batch}</span>
                   <span style="margin-left:6px;color:#888;">Plantare: ${fmtDate(b.plantDate)}</span>
                   <span style="margin-left:6px;color:#888;">Recoltare: ${fmtDate(b.harvestDate)}</span>
                 </div>
-                <span class="status-pill ${b.status === 'programat' ? 'neplantat' : b.status === 'în creștere' ? 'plantat' : 'recoltat'}" style="font-size:10px;">${b.status}</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  ${b.status === 'programat' ? `<button onclick="markBatchPlanted('${displayName}', ${index}, ${defaults.interval}, ${defaults.daysToHarvest})" style="background:var(--green-mid);color:white;border:none;border-radius:4px;padding:3px 6px;font-size:9px;cursor:pointer;font-weight:700;">✓</button>` : ''}
+                  <span class="status-pill ${b.status === 'programat' ? 'neplantat' : b.status === 'în creștere' ? 'plantat' : 'recoltat'}" style="font-size:9px;">${b.status}</span>
+                </div>
               </div>
             `).join('')}
           </div>
@@ -2640,6 +2689,56 @@ function renderSuccessionPlan(plantName) {
 
     batchesEl.innerHTML = allBatchesHtml;
   }
+}
+
+// Mark a succession batch as planted
+function markBatchPlanted(plantName, batchIndex, intervalDays, daysToHarvest) {
+  if (!currentId) {
+    showToast('⚠️ Selectează o plantă din grădină!');
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
+
+  // Update the plant's planting date to today
+  const data = getData(currentId);
+  gardenData[currentId] = {
+    ...data,
+    date: todayStr,
+    status: 'plantat'
+  };
+
+  // Store the actual planting date for succession tracking
+  if (!gardenData[currentId].successionPlantings) {
+    gardenData[currentId].successionPlantings = [];
+  }
+  gardenData[currentId].successionPlantings.push({
+    batch: batchIndex + 1,
+    date: todayStr
+  });
+
+  // Add to history
+  gardenData[currentId].history = (data.history || []).concat({
+    date: todayStr,
+    status: 'plantat',
+    note: `Lot ${batchIndex + 1} plantat conform planului de plantare succesivă`
+  });
+
+  // Save the data
+  saveData(gardenData);
+
+  // Update the bed in the garden
+  const bed = document.querySelector(`[data-id="${currentId}"]`);
+  if (bed) {
+    bed.dataset.status = 'plantat';
+  }
+
+  // Re-render the succession plan with updated dates
+  renderSuccessionPlan(plantName);
+
+  showToast(`✅ Lot ${batchIndex + 1} marcat ca plantat! Data actualizată la ${todayStr}`);
 }
 
 // Undo/redo history
@@ -2800,6 +2899,30 @@ function deleteGarden(gardenId) {
   renderGardenList();
   updateGardenSelector();
   showToast('🗑️ Grădina ștearsă!');
+}
+
+function deleteCurrentGarden() {
+  if (Object.keys(gardensData).length <= 1) {
+    showToast('⚠️ Trebuie să ai cel puțin o grădină!');
+    return;
+  }
+  
+  const gardenName = gardensData[currentGardenId]?.name || 'această grădină';
+  if (!confirm(`Ești sigur că vrei să ștergi "${gardenName}"? Toate datele vor fi pierdute.`)) {
+    return;
+  }
+  
+  delete gardensData[currentGardenId];
+  
+  // Switch to another garden
+  const remainingIds = Object.keys(gardensData);
+  currentGardenId = remainingIds[0];
+  localStorage.setItem('current_garden_id', currentGardenId);
+  loadCurrentGardenData();
+  
+  saveGardensData();
+  updateGardenSelector();
+  showToast(`🗑️ "${gardenName}" ștearsă!`);
 }
 
 function switchGarden(gardenId) {
@@ -4920,10 +5043,12 @@ function renderProgress() {
   });
   
   const total = allPlants.length;
-  const pct = total ? Math.round((planted+harvested+sprouted+perena) / total * 100) : 0;
+  // Planted includes all plants that are NOT neplantat
+  const totalPlanted = total - neplantat;
+  const pct = total ? Math.round(totalPlanted / total * 100) : 0;
 
   document.getElementById('main-progress').style.width = pct + '%';
-  document.getElementById('stat-planted').textContent = planted;
+  document.getElementById('stat-planted').textContent = totalPlanted;
   document.getElementById('stat-total').textContent = total;
 
   // Calculate plant density (plants per garden area)
