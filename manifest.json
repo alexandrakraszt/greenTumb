@@ -1,6 +1,6 @@
 {
-  "name": "Green Thumb - Planificator Grădină",
-  "short_name": "Green Thumb",
+  "name": "The Green Thumb - Planificator Grădină",
+  "short_name": "The Green Thumb",
   "description": "Aplicație pentru planificarea și gestionarea grădinii",
   "start_url": "/",
   "display": "standalone",
