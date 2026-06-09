@@ -1,6 +1,6 @@
 // Firebase Configuration - REPLACE WITH YOUR OWN CONFIG
 // Get your config from: https://console.firebase.google.com/
-const firebaseConfig = {
+window.firebaseConfig = {
   apiKey: "AIzaSyCSNsdefxLW9YK13EHlsh6CiJwKmxmxinY",
   authDomain: "greenthumb-59917.firebaseapp.com",
   projectId: "greenthumb-59917",
@@ -10,7 +10,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(window.firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
