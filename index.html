@@ -513,7 +513,7 @@
     transition: background 0.2s;
   }
   .bed[data-status="plantat"]::after { background: var(--green-light); box-shadow: 0 0 6px var(--green-light); }
-  .bed[data-status="incoltat"]::after { background: var(--accent-yellow); box-shadow: 0 0 6px var(--accent-yellow); }
+  .bed[data-status="Încolțit"]::after { background: var(--accent-yellow); box-shadow: 0 0 6px var(--accent-yellow); }
   .bed[data-status="recoltat"]::after { background: var(--accent-blue); box-shadow: 0 0 6px var(--accent-blue); }
   .bed[data-status="perena"]::after { background: #E91E63; box-shadow: 0 0 6px #E91E63; }
   .bed[data-status="problema"]::after { background: var(--accent-red); box-shadow: 0 0 6px var(--accent-red); }
@@ -829,7 +829,7 @@
   }
   .status-pill.neplantat { background: #f5f5f5; color: #999; }
   .status-pill.plantat { background: #e8f5e0; color: #2D7D1A; }
-  .status-pill.incoltat { background: #fff8e0; color: #B8760A; }
+  .status-pill.Încolțit { background: #fff8e0; color: #B8760A; }
   .status-pill.recoltat { background: #e0f0ff; color: #1A5A8A; }
   .status-pill.perena { background: #fce4ec; color: #E91E63; }
   .status-pill.problema { background: #ffe0e0; color: #A01A1A; }
@@ -1440,7 +1440,7 @@
     <div class="status-grid">
       <div class="status-btn" data-status="neplantat" onclick="selectStatus('neplantat')"><span class="s-icon">⬜</span>Neplantat</div>
       <div class="status-btn" data-status="plantat" onclick="selectStatus('plantat')"><span class="s-icon">🌱</span>Plantat</div>
-      <div class="status-btn" data-status="incoltat" onclick="selectStatus('incoltat')"><span class="s-icon">🌿</span>Încolțit</div>
+      <div class="status-btn" data-status="Încolțit" onclick="selectStatus('Încolțit')"><span class="s-icon">🌿</span>Încolțit</div>
       <div class="status-btn" data-status="recoltat" onclick="selectStatus('recoltat')"><span class="s-icon">🧺</span>Recoltat</div>
       <div class="status-btn" data-status="perena" onclick="selectStatus('perena')"><span class="s-icon">🌸</span>Planta Perena</div>
       <div class="status-btn" data-status="problema" onclick="selectStatus('problema')"><span class="s-icon">⚠️</span>Uscat</div>
@@ -3206,6 +3206,41 @@ function loadGardensData() {
     currentGardenId = 'default';
     saveGardensData();
   }
+
+  // Cleanup: remove non-bed entries (entries without valid position) from all gardens
+  let cleanupCount = 0;
+  Object.values(gardensData).forEach(garden => {
+    if (garden.gardenData) {
+      Object.keys(garden.gardenData).forEach(plantId => {
+        const data = garden.gardenData[plantId];
+        if (!isRealBed(data)) {
+          delete garden.gardenData[plantId];
+          cleanupCount++;
+        }
+      });
+    }
+  });
+
+  // Cleanup: remove customPlants entries whose IDs no longer exist in any garden
+  const customPlants = JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]');
+  const activePlantIds = new Set();
+  Object.values(gardensData).forEach(garden => {
+    if (garden.gardenData) {
+      Object.keys(garden.gardenData).forEach(id => activePlantIds.add(id));
+    }
+  });
+  const originalCustomCount = customPlants.length;
+  const filteredCustomPlants = customPlants.filter(cp => activePlantIds.has(cp.id));
+  if (filteredCustomPlants.length !== originalCustomCount) {
+    localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(filteredCustomPlants));
+    cleanupCount += (originalCustomCount - filteredCustomPlants.length);
+  }
+
+  // Persist cleaned data if any cleanup occurred
+  if (cleanupCount > 0) {
+    console.log(`[loadGardensData] Cleaned up ${cleanupCount} orphaned entries`);
+    saveGardensData();
+  }
 }
 
 function updateGardenSelector() {
@@ -4968,6 +5003,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============ CALENDAR ============
+// Helper to check if an entry represents a real bed (has valid position)
+function isRealBed(data) {
+  if (!data || !data.position) return false;
+  const pos = data.position;
+  // Must have numeric left and top coordinates
+  return typeof pos.left === 'number' && typeof pos.top === 'number';
+}
+
 function getCurrentSeason() {
   const month = new Date().getMonth(); // 0-11
   if (month >= 2 && month <= 4) return { name: 'Primăvară', emoji: '🌸', color: '#FFB7B2' };
@@ -5048,7 +5091,7 @@ function calculateHarvestForecast() {
     const data = getData(id);
     const plant = PLANTS[id];
     
-    if (data.status === 'plantat' || data.status === 'incoltat') {
+    if (data.status === 'plantat' || data.status === 'Încolțit') {
       const expectedDate = calculateExpectedHarvestDate(data.date, plant.period);
       if (expectedDate) {
         const harvestHistory = data.harvest || [];
@@ -5128,7 +5171,8 @@ function renderCalendar() {
     
     Object.entries(garden.gardenData || {}).forEach(([plantId, data]) => {
       const plant = PLANTS[plantId];
-      if (plant) {
+      // Only include entries that are real beds (have a valid position)
+      if (plant && isRealBed(data)) {
         allPlants.push({
           id: plantId,
           data: data,
@@ -5187,8 +5231,8 @@ function renderCalendar() {
   
   container.innerHTML = allPlants.map(({ id, data, plant, gardenName }) => {
     const statusClass = data.status || 'neplantat';
-    const statusLabels = { neplantat:'Neplantat', plantat:'Plantat', incoltat:'Încolțit', recoltat:'Recoltat', perena:'Planta Perena', problema:'Problemă' };
-    const statusIcons = { neplantat:'⬜', plantat:'🌱', incoltat:'🌿', recoltat:'🧺', perena:'🌸', problema:'⚠️' };
+    const statusLabels = { neplantat:'Neplantat', plantat:'Plantat', Încolțit:'Încolțit', recoltat:'Recoltat', perena:'Planta Perena', problema:'Problemă' };
+    const statusIcons = { neplantat:'⬜', plantat:'🌱', Încolțit:'🌿', recoltat:'🧺', perena:'🌸', problema:'⚠️' };
     const displayEmoji = data.emoji || plant.emoji;
     const displayName = data.name || plant.name;
     const history = data.history || [];
@@ -5261,7 +5305,8 @@ function renderProgress() {
     
     Object.entries(garden.gardenData || {}).forEach(([plantId, data]) => {
       const plant = PLANTS[plantId];
-      if (plant) {
+      // Only include entries that are real beds (have a valid position)
+      if (plant && isRealBed(data)) {
         allPlants.push({
           id: plantId,
           data: data,
@@ -5278,7 +5323,7 @@ function renderProgress() {
     const s = data.status;
     if (s === 'plantat') planted++;
     if (s === 'recoltat') harvested++;
-    if (s === 'incoltat') sprouted++;
+    if (s === 'Încolțit') sprouted++;
     if (s === 'perena') perena++;
     if (s === 'problema') problems++;
     if (s === 'neplantat') neplantat++;
