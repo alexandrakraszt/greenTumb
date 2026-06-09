@@ -4411,8 +4411,12 @@ function showToast(msg) {
 
 // ============ EXPORT/IMPORT ============
 function exportData() {
+  // Ensure current garden data is synced before export
+  saveCurrentGardenData();
+  
   const exportData = {
-    gardenData: gardenData,
+    gardensData: gardensData,
+    currentGardenId: currentGardenId,
     customPlants: JSON.parse(localStorage.getItem(CUSTOM_PLANTS_KEY) || '[]'),
     exportDate: new Date().toISOString()
   };
@@ -4435,8 +4439,27 @@ function importData(event) {
   reader.onload = function(e) {
     try {
       const imported = JSON.parse(e.target.result);
-      if (imported.gardenData) {
-        // Import into current garden
+      
+      // Handle new format with gardensData
+      if (imported.gardensData) {
+        gardensData = imported.gardensData;
+        currentGardenId = imported.currentGardenId || 'default';
+        gardenData = gardensData[currentGardenId]?.gardenData || {};
+        
+        if (imported.customPlants) {
+          localStorage.setItem(CUSTOM_PLANTS_KEY, JSON.stringify(imported.customPlants));
+          loadCustomPlants();
+        }
+        
+        // Save to both localStorage and Firebase
+        saveGardensData();
+        localStorage.setItem('current_garden_id', currentGardenId);
+        
+        initBeds();
+        showToast('📂 Date importate cu succes!');
+      }
+      // Handle old format with just gardenData (backward compatibility)
+      else if (imported.gardenData) {
         gardensData[currentGardenId].gardenData = imported.gardenData;
         gardenData = imported.gardenData;
         
