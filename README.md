@@ -1,4 +1,4 @@
-# Green Thumb 🌱 Garden Management App
+# The Green Thumb 🌱 Garden Management App
 
 A web-based garden planning and tracking application with Firebase authentication and Firestore data persistence.
 
