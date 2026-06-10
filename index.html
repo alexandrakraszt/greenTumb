@@ -14,7 +14,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.google.com/recaptcha/api.js?render=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" async defer></script>
 <script>
   // Firebase Configuration - REPLACE WITH YOUR OWN CONFIG
   // Get your config from: https://console.firebase.google.com/
@@ -3911,19 +3910,6 @@ async function submitBugReport() {
   try {
     console.log('[submitBugReport] Submitting bug report');
     
-    // reCAPTCHA verification (optional - if not loaded, skip it)
-    let recaptchaToken = '';
-    if (typeof grecaptcha !== 'undefined') {
-      try {
-        recaptchaToken = await grecaptcha.execute('6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', { action: 'bug_report' });
-        console.log('[submitBugReport] reCAPTCHA token received');
-      } catch (error) {
-        console.error('[submitBugReport] reCAPTCHA error (continuing without it):', error);
-      }
-    } else {
-      console.log('[submitBugReport] reCAPTCHA not loaded, continuing without it');
-    }
-    
     const bugReport = {
       type: bugType,
       description: description,
@@ -3933,8 +3919,7 @@ async function submitBugReport() {
       userEmail: currentUser ? currentUser.email : email,
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
-      url: window.location.href,
-      recaptchaToken: recaptchaToken || 'not_provided'
+      url: window.location.href
     };
 
     // Save to Firestore
@@ -4114,17 +4099,6 @@ async function handleAuthSubmit() {
     if (password !== confirmPassword) {
       console.log('[handleAuthSubmit] Validation failed: passwords do not match');
       errorDiv.textContent = 'Parolele nu coincid';
-      errorDiv.style.display = 'block';
-      return;
-    }
-
-    // reCAPTCHA verification for sign-up
-    try {
-      const recaptchaToken = await grecaptcha.execute('6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', { action: 'signup' });
-      console.log('[handleAuthSubmit] reCAPTCHA token received');
-    } catch (error) {
-      console.error('[handleAuthSubmit] reCAPTCHA error:', error);
-      errorDiv.textContent = 'Eroare la verificarea reCAPTCHA. Te rugăm să încerci din nou.';
       errorDiv.style.display = 'block';
       return;
     }
