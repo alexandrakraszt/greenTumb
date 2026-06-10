@@ -14,6 +14,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.google.com/recaptcha/api.js?render=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" async defer></script>
 <script>
   // Firebase Configuration - REPLACE WITH YOUR OWN CONFIG
   // Get your config from: https://console.firebase.google.com/
@@ -3895,8 +3896,33 @@ async function submitBugReport() {
     return;
   }
 
+  // Rate limiting check (local storage based)
+  const lastReportTime = localStorage.getItem('last_bug_report_time');
+  const now = Date.now();
+  const RATE_LIMIT_MS = 60000; // 1 minute between reports
+
+  if (lastReportTime && now - parseInt(lastReportTime) < RATE_LIMIT_MS) {
+    const remainingTime = Math.ceil((RATE_LIMIT_MS - (now - parseInt(lastReportTime))) / 1000);
+    errorDiv.textContent = `Te rugăm să aștepți ${remainingTime} secunde înainte de a trimite un alt raport.`;
+    errorDiv.style.display = 'block';
+    return;
+  }
+
   try {
     console.log('[submitBugReport] Submitting bug report');
+    
+    // reCAPTCHA verification (optional - if not loaded, skip it)
+    let recaptchaToken = '';
+    if (typeof grecaptcha !== 'undefined') {
+      try {
+        recaptchaToken = await grecaptcha.execute('6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', { action: 'bug_report' });
+        console.log('[submitBugReport] reCAPTCHA token received');
+      } catch (error) {
+        console.error('[submitBugReport] reCAPTCHA error (continuing without it):', error);
+      }
+    } else {
+      console.log('[submitBugReport] reCAPTCHA not loaded, continuing without it');
+    }
     
     const bugReport = {
       type: bugType,
@@ -3907,18 +3933,22 @@ async function submitBugReport() {
       userEmail: currentUser ? currentUser.email : email,
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
-      url: window.location.href
+      url: window.location.href,
+      recaptchaToken: recaptchaToken || 'not_provided'
     };
 
     // Save to Firestore
     await db.collection('bug_reports').add(bugReport);
     console.log('[submitBugReport] Bug report saved to Firestore');
     
+    // Update rate limit
+    localStorage.setItem('last_bug_report_time', now.toString());
+    
     showToast('✅ Raport trimis cu succes! Mulțumim pentru ajutor.');
     closeBugReportModal();
   } catch (error) {
     console.error('[submitBugReport] Error submitting bug report:', error);
-    errorDiv.textContent = 'Eroare la trimiterea raportului. Te rugăm să încerci din nou.';
+    errorDiv.textContent = 'Eroare la trimiterea raportului: ' + error.message;
     errorDiv.style.display = 'block';
   }
 }
@@ -4059,15 +4089,42 @@ async function handleAuthSubmit() {
   }
 
   if (isSignupMode) {
-    if (password.length < 6) {
+    // Improved password validation
+    if (password.length < 8) {
       console.log('[handleAuthSubmit] Validation failed: password too short');
-      errorDiv.textContent = 'Parola trebuie să aibă cel puțin 6 caractere';
+      errorDiv.textContent = 'Parola trebuie să aibă cel puțin 8 caractere';
+      errorDiv.style.display = 'block';
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      errorDiv.textContent = 'Parola trebuie să conțină cel puțin o majusculă';
+      errorDiv.style.display = 'block';
+      return;
+    }
+    if (!/[a-z]/.test(password)) {
+      errorDiv.textContent = 'Parola trebuie să conțină cel puțin o minusculă';
+      errorDiv.style.display = 'block';
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      errorDiv.textContent = 'Parola trebuie să conțină cel puțin o cifră';
       errorDiv.style.display = 'block';
       return;
     }
     if (password !== confirmPassword) {
       console.log('[handleAuthSubmit] Validation failed: passwords do not match');
       errorDiv.textContent = 'Parolele nu coincid';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    // reCAPTCHA verification for sign-up
+    try {
+      const recaptchaToken = await grecaptcha.execute('6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', { action: 'signup' });
+      console.log('[handleAuthSubmit] reCAPTCHA token received');
+    } catch (error) {
+      console.error('[handleAuthSubmit] reCAPTCHA error:', error);
+      errorDiv.textContent = 'Eroare la verificarea reCAPTCHA. Te rugăm să încerci din nou.';
       errorDiv.style.display = 'block';
       return;
     }
