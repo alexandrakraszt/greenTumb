@@ -4150,13 +4150,11 @@ async function handleAuthSubmit() {
       currentUser = userCredential.user;
       console.log('[handleAuthSubmit] Login successful, user ID:', currentUser.uid);
       
-      // Check if email is verified
+      // Email verification is optional - don't block login if not verified
       if (!currentUser.emailVerified) {
-        console.log('[handleAuthSubmit] Email not verified');
-        await auth.signOut();
-        errorDiv.textContent = 'Te rugăm să îți verifici email-ul înainte de a te autentifica. Verifică inbox-ul pentru link-ul de confirmare.';
-        errorDiv.style.display = 'block';
-        return;
+        console.log('[handleAuthSubmit] Email not verified, but allowing login');
+        // Optionally send another verification email
+        // currentUser.sendEmailVerification();
       }
       
       saveEmailToHistory(email);
